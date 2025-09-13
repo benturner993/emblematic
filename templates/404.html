@@ -1,14 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}Page Not Found - Flask App{% endblock %}
+{% block title %}Page Not Found - AI Emblematic{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-6 mx-auto text-center">
-        <h1 class="display-1">404</h1>
-        <h2>Page Not Found</h2>
-        <p class="lead">Sorry, the page you are looking for doesn't exist.</p>
-        <a href="{{ url_for('index') }}" class="btn btn-primary">Go Home</a>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="error-page">
+                <h1 class="display-1 text-primary">404</h1>
+                <h2 class="mb-4">Page Not Found</h2>
+                <p class="lead mb-4">The page you're looking for doesn't exist.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">Go Home</a>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+.error-page {
+    padding: 60px 0;
+}
+.display-1 {
+    font-size: 6rem;
+    font-weight: 300;
+    line-height: 1.2;
+}
+</style>
 {% endblock %}

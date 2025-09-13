@@ -684,10 +684,10 @@ function performRegularFhirConversion(fileHash, fhirContent, fhirBtn) {
         // Show error message
         fhirContent.innerHTML = `
             <div class="analysis-item" style="border-left-color: #dc3545;">
-                <h4>Error</h4>
+                <h4>❌ Conversion Error</h4>
                 <p>Failed to convert to FHIR: ${error.message}</p>
                 <p>Please make sure your Azure OpenAI credentials are configured correctly.</p>
-                <a href="/fhir-logs/${fileHash}" class="btn btn-secondary" target="_blank">View Detailed Logs</a>
+                <a href="/fhir-judge-logs/${fileHash}" class="btn btn-secondary" target="_blank">View Detailed Logs</a>
             </div>
         `;
         
@@ -902,12 +902,12 @@ function displayFhirResults(data) {
             `;
         }
         
-        // Add link to detailed logs for errors
+        // Always add link to detailed logs
         const pathParts = window.location.pathname.split('/');
         const fileHash = pathParts[pathParts.length - 1];
         html += `
             <div style="margin-top: 15px;">
-                <a href="/fhir-logs/${fileHash}" class="btn btn-secondary" target="_blank">View Detailed Logs</a>
+                <a href="/fhir-judge-logs/${fileHash}" class="btn btn-secondary" target="_blank">View Detailed Logs</a>
             </div>
         `;
         
@@ -916,27 +916,32 @@ function displayFhirResults(data) {
         return;
     }
     
-    const validation = data.validation;
+    const validation = data.validation || {};
     const fhirBundle = data.fhir_bundle;
-    const groundedness = data.groundedness;
+    const groundedness = data.groundedness || {};
     
-    // Determine success status based on groundedness score
-    const isHighQuality = groundedness && groundedness.groundedness_score >= 5;
-    const statusIcon = isHighQuality ? '✅' : '⚠️';
-    const statusText = isHighQuality ? 'FHIR Conversion Successful' : 'FHIR Conversion Completed (Quality Issues)';
+    // Display confidence score prominently
+    const confidenceScore = data.confidence_score || (groundedness.groundedness_score ? `${groundedness.groundedness_score}/5` : 'N/A');
+    const scoreValue = groundedness.groundedness_score || 0;
+    const scoreColor = scoreValue >= 4 ? '#28a745' : scoreValue >= 3 ? '#ffc107' : '#dc3545';
+    const statusIcon = scoreValue >= 4 ? '✅' : scoreValue >= 3 ? '⚠️' : '❌';
+    const statusText = scoreValue >= 4 ? 'High Confidence FHIR Conversion' : 
+                      scoreValue >= 3 ? 'Moderate Confidence FHIR Conversion' : 
+                      'Low Confidence FHIR Conversion';
     
     let html = `
         <div class="analysis-item">
             <h4>${statusIcon} ${statusText}</h4>
-            <p><strong>Validation Score:</strong> <span class="confidence-badge">${validation.validation_score}%</span></p>
-            <p><strong>Resource Count:</strong> ${validation.resource_count}</p>
-            <p><strong>Resource Types:</strong> ${validation.resource_types.join(', ')}</p>
-            <p><strong>Status:</strong> ${validation.is_valid ? 'Valid FHIR Bundle' : 'Invalid FHIR Bundle'}</p>
+            <p><strong>🎯 Confidence Score:</strong> <span class="confidence-badge" style="background-color: ${scoreColor}; color: white; font-weight: bold; font-size: 1.1em;">${confidenceScore}</span></p>
+            <p><strong>Validation Score:</strong> <span class="confidence-badge">${validation.validation_score || 'N/A'}%</span></p>
+            <p><strong>Resource Count:</strong> ${validation.resource_count || 'N/A'}</p>
+            <p><strong>Resource Types:</strong> ${validation.resource_types ? validation.resource_types.join(', ') : 'N/A'}</p>
+            <p><strong>Bundle Status:</strong> ${validation.is_valid ? 'Valid FHIR Bundle' : 'Invalid FHIR Bundle'}</p>
         </div>
     `;
     
     // Add groundedness evaluation results
-    if (groundedness) {
+    if (groundedness && groundedness.groundedness_score) {
         const scoreColor = groundedness.groundedness_score >= 5 ? '#28a745' : 
                           groundedness.groundedness_score >= 3 ? '#ffc107' : '#dc3545';
         const acceptableText = groundedness.is_acceptable ? '✅ Yes' : '❌ No';
@@ -946,7 +951,7 @@ function displayFhirResults(data) {
             <div class="analysis-item">
                 <h4>🎯 Groundedness Evaluation</h4>
                 <p><strong>Groundedness Score:</strong> <span class="confidence-badge" style="background-color: ${scoreColor};">${groundedness.groundedness_score}/5</span></p>
-                <p><strong>Assessment:</strong> ${groundedness.overall_assessment}</p>
+                <p><strong>Assessment:</strong> ${groundedness.overall_assessment || 'N/A'}</p>
                 <p><strong>Acceptable Quality:</strong> <span style="color: ${acceptableColor}; font-weight: bold;">${acceptableText}</span></p>
         `;
         
@@ -995,16 +1000,16 @@ function displayFhirResults(data) {
         html += `</div>`;
     }
     
-    // Add link to detailed logs
-    if (data.detailed_logs && data.detailed_logs.length > 0) {
-        html += `
-            <div class="analysis-item">
-                <h4>📋 Conversion Logs</h4>
-                <p>Detailed logs of all conversion attempts and LLM interactions are available.</p>
-                <a href="/fhir-logs/${fileHash}" class="btn btn-secondary" target="_blank">View Detailed Logs</a>
-            </div>
-        `;
-    }
+    // Always add link to detailed logs
+    const pathParts = window.location.pathname.split('/');
+    const fileHash = pathParts[pathParts.length - 1];
+    html += `
+        <div class="analysis-item">
+            <h4>📋 Conversion Logs</h4>
+            <p>Detailed logs of all conversion attempts and LLM judge interactions are available.</p>
+            <a href="/fhir-judge-logs/${fileHash}" class="btn btn-secondary" target="_blank">View Detailed Logs</a>
+        </div>
+    `;
     
     if (validation.warnings && validation.warnings.length > 0) {
         html += `

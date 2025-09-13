@@ -6,8 +6,11 @@ A Flask web application for intelligent document processing with AI-powered anal
 
 - **Document Upload**: PDF file upload and text extraction
 - **AI Analysis**: OpenAI-powered document summarization and classification
-- **FHIR Conversion**: Convert medical documents to FHIR format
+- **FHIR Conversion**: Convert medical documents to FHIR format with confidence scoring
 - **Smart Caching**: Avoid re-processing the same documents
+- **Modular Architecture**: Clean separation of concerns with dedicated service layers
+- **Best Score Tracking**: Returns the highest quality result from multiple AI attempts
+- **Feedback Learning**: AI agents learn from previous attempts to improve results
 - **Bootstrap 5**: Modern, responsive UI components
 - **Template Inheritance**: Consistent layout using Jinja2 templates
 - **API Endpoints**: RESTful API for data interaction
@@ -17,7 +20,13 @@ A Flask web application for intelligent document processing with AI-powered anal
 
 ```
 emblematic/
-├── app.py                 # Main Flask application
+├── app.py                 # Main Flask application (modular entry point)
+├── app_original.py        # Original monolithic app (backup)
+├── config.py              # Application configuration and settings
+├── utils.py               # Utility functions (file handling, caching, etc.)
+├── ai_services.py         # AI/OpenAI service layer
+├── fhir_services.py       # FHIR conversion and validation services
+├── routes.py              # Flask route handlers
 ├── models.py              # Pydantic models for AI analysis
 ├── keys.py                # API keys (not in version control)
 ├── keys_example.py        # Example API keys file
@@ -28,14 +37,64 @@ emblematic/
 │   ├── base.html         # Base template
 │   ├── index.html        # Home page
 │   ├── about.html        # About page
-│   └── text_display.html # Document display page
+│   ├── text_display.html # Document display page
+│   ├── fhir_logs.html    # FHIR conversion logs page
+│   ├── 404.html          # 404 error page
+│   └── 500.html          # 500 error page
 ├── static/               # Static files
-    ├── online-A-long-journey.png  # Background image
+│   └── online-A-long-journey.png  # Background image
 ├── uploads/              # Uploaded files (not in version control)
 └── text_cache/           # Cached text and analysis (not in version control)
-    │   └── main.js       # JavaScript functionality
-    └── images/           # Image assets
 ```
+
+## Modular Architecture
+
+The application follows a clean, modular architecture with separation of concerns:
+
+### Core Components
+
+- **`config.py`**: Centralized configuration management
+  - Handles environment variables and API keys
+  - Manages directory creation and validation
+  - Provides configuration objects to other modules
+
+- **`utils.py`**: Utility functions and file operations
+  - PDF text extraction with fallback methods
+  - File hashing and caching operations
+  - Session data management
+  - File validation and security
+
+- **`ai_services.py`**: AI/OpenAI service layer
+  - Document analysis and classification
+  - Medical document detection
+  - Structured and freeform analysis
+  - Azure OpenAI client management
+
+- **`fhir_services.py`**: FHIR conversion and validation
+  - Medical document to FHIR conversion
+  - Multi-attempt processing with best score tracking
+  - Groundedness evaluation using LLM judges
+  - FHIR Bundle structure validation
+  - Feedback learning between attempts
+
+- **`routes.py`**: Flask route handlers
+  - HTTP request/response handling
+  - File upload processing
+  - API endpoint management
+  - Error handling and user feedback
+
+- **`app.py`**: Main application entry point
+  - Application factory pattern
+  - Service initialization
+  - Development server configuration
+
+### Benefits of Modular Design
+
+- **Maintainability**: Each module has a single responsibility
+- **Testability**: Components can be tested in isolation
+- **Reusability**: Services can be reused across different contexts
+- **Scalability**: Easy to extend with new features
+- **Debugging**: Issues can be traced to specific modules
 
 ## Installation
 

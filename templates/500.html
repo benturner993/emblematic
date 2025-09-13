@@ -1,14 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}Server Error - Flask App{% endblock %}
+{% block title %}Server Error - AI Emblematic{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-6 mx-auto text-center">
-        <h1 class="display-1">500</h1>
-        <h2>Internal Server Error</h2>
-        <p class="lead">Something went wrong on our end. Please try again later.</p>
-        <a href="{{ url_for('index') }}" class="btn btn-primary">Go Home</a>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="error-page">
+                <h1 class="display-1 text-danger">500</h1>
+                <h2 class="mb-4">Internal Server Error</h2>
+                <p class="lead mb-4">Something went wrong on our end. Please try again later.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">Go Home</a>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+.error-page {
+    padding: 60px 0;
+}
+.display-1 {
+    font-size: 6rem;
+    font-weight: 300;
+    line-height: 1.2;
+}
+</style>
 {% endblock %}
