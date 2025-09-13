@@ -1,5 +1,10 @@
-# OpenAI Configuration
-OPENAI_API_KEY=your_openai_api_key_here
+# Azure OpenAI Configuration
+AZURE_OPENAI_API_KEY=your_azure_openai_api_key_here
+AZURE_OPENAI_ENDPOINT=https://your-resource-name.cognitiveservices.azure.com
+AZURE_OPENAI_API_VERSION=2024-12-01-preview
+
+# Legacy OpenAI API Key (optional)
+# OPENAI_API_KEY=your_openai_api_key_here
 
 # Flask Configuration
 SECRET_KEY=your_secret_key_here

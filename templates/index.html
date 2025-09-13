@@ -50,23 +50,40 @@
     }
     
     .upload-section {
-        background-color: #f1efeb; /* Custom light grey */
-        border: none;
+        background-color: white;
+        border: 1px solid #e0e0e0;
         border-radius: 10px;
-        padding: 20px;
-        text-align: center;
-        margin: 20px 0;
+        padding: 15px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
         max-width: 600px;
         margin-left: auto;
         margin-right: auto;
-        transition: all 0.3s ease;
     }
     
-    .upload-section:hover {
-        background-color: #e8e5e0; /* Slightly darker on hover */
-        transform: scale(1.02);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    .upload-header {
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .upload-header h3 {
+        color: #0d1846;
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+    
+    .upload-content {
+        line-height: 1.6;
+        text-align: center;
+    }
+    
+    .upload-content p {
+        color: #0d1846;
+        margin: 10px 0;
     }
     
     .upload-btn {
@@ -173,19 +190,23 @@
 </div> -->
 
 <div class="upload-section">
-    <h3 style="color: #0d1846;">Upload Your Document</h3>
-    <p style="color: #0d1846;">Upload a PDF document to extract and analyse its text content.</p>
-    
-    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" id="uploadForm">
-        <div>
-            <input type="file" name="file" accept=".pdf" required class="file-input">
-        </div>
-        <button type="submit" class="upload-btn">Extract Text</button>
-    </form>
-    
-    <p style="font-size: 12px; color: #666; margin-top: 10px;">
-        PDF files only • Max 16MB
-    </p>
+    <div class="upload-header">
+        <h3>📄 Upload Your Document</h3>
+    </div>
+    <div class="upload-content">
+        <p>Upload a PDF document to extract and analyse its text content.</p>
+        
+        <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+            <div>
+                <input type="file" name="file" accept=".pdf" required class="file-input">
+            </div>
+            <button type="submit" class="upload-btn">Extract Text</button>
+        </form>
+        
+        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+            PDF files only • Max 16MB
+        </p>
+    </div>
 </div>
 
 <!-- <div class="features-grid">

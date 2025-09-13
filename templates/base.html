@@ -91,6 +91,9 @@
             <div class="login">
                 <a href="/">Home</a>
                 <a href="/about">About</a>
+                {% if file_hash %}
+                    <a href="/fhir-logs/{{ file_hash }}">FHIR Logs</a>
+                {% endif %}
             </div>
         </div>
     </div>

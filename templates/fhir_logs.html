@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}FHIR Conversion Logs - AI Emblematic{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <h1>🏥 FHIR Conversion Logs</h1>
+        <p>Detailed logs of FHIR conversion process and LLM interactions</p>
+        <div class="back-link">
+            <a href="{{ url_for('text_display', file_hash=file_hash) }}" class="btn btn-secondary">← Back to Document</a>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="error-section">
+            <h2>❌ Error</h2>
+            <p>{{ error }}</p>
+        </div>
+    {% else %}
+        <!-- Original Document Section -->
+        <div class="log-section">
+            <h2>📄 Original Document</h2>
+            <div class="document-content">
+                <p><strong>File Hash:</strong> {{ file_hash }}</p>
+                <p><strong>Text Length:</strong> {{ original_text|length }} characters</p>
+                <details>
+                    <summary>View Original Text</summary>
+                    <pre class="text-content">{{ original_text }}</pre>
+                </details>
+            </div>
+        </div>
+
+        <!-- LLM Judge Logs -->
+        {% if fhir_data.has_judge_logs %}
+            <div class="log-section success">
+                <h2>🤖 LLM Judge Communications</h2>
+                <div class="judge-logs-content">
+                    <p><strong>Status:</strong> {{ fhir_data.conversion_notes or 'Judge logs loaded successfully' }}</p>
+                    <div class="judge-output">
+                        <pre class="judge-text">{{ fhir_data.judge_logs_text }}</pre>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="log-section error">
+                <h2>❌ No Judge Logs Available</h2>
+                <p><strong>Message:</strong> {{ fhir_data.judge_logs_text }}</p>
+                <p>Please run a FHIR conversion to generate judge logs.</p>
+            </div>
+        {% endif %}
+
+        <!-- Detailed Logs Section -->
+        {% if fhir_data.detailed_logs and fhir_data.detailed_logs|length > 0 %}
+            <div class="log-section">
+                <h2>📋 Detailed Conversion Logs</h2>
+                <p>Complete logs of all conversion attempts and LLM interactions:</p>
+                
+                {% for log in fhir_data.detailed_logs %}
+                    <div class="attempt-log">
+                        <h3>Attempt {{ log.attempt_number }} - {{ log.timestamp }}</h3>
+                        
+                        <!-- FHIR Conversion Agent Logs -->
+                        {% if log.fhir_conversion %}
+                            <div class="agent-section">
+                                <h4>🏥 FHIR Conversion Agent</h4>
+                                <div class="agent-details">
+                                    <p><strong>Prompt Length:</strong> {{ log.fhir_conversion.prompt_length }} characters</p>
+                                    <p><strong>Response Length:</strong> {{ log.fhir_conversion.response_length }} characters</p>
+                                    <p><strong>Parsed Successfully:</strong> {{ 'Yes' if log.fhir_conversion.parsed_successfully else 'No' }}</p>
+                                    
+                                    {% if log.fhir_conversion.json_error %}
+                                        <p><strong>JSON Error:</strong> {{ log.fhir_conversion.json_error }}</p>
+                                    {% endif %}
+                                    
+                                    <details>
+                                        <summary>View FHIR Agent Prompt</summary>
+                                        <pre class="prompt-content">{{ log.fhir_conversion.prompt }}</pre>
+                                    </details>
+                                    
+                                    {% if log.fhir_conversion.raw_response %}
+                                        <details>
+                                            <summary>View Raw FHIR Response</summary>
+                                            <pre class="response-content">{{ log.fhir_conversion.raw_response }}</pre>
+                                        </details>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Structure Validation Logs -->
+                        {% if log.structure_validation %}
+                            <div class="agent-section">
+                                <h4>🔍 Structure Validation (Evaluator Optimizer)</h4>
+                                <div class="agent-details">
+                                    <p><strong>Valid:</strong> {{ 'Yes' if log.structure_validation.is_valid else 'No' }}</p>
+                                    <p><strong>Score:</strong> {{ log.structure_validation.validation_score }}%</p>
+                                    <p><strong>Resource Count:</strong> {{ log.structure_validation.resource_count }}</p>
+                                    <p><strong>Resource Types:</strong> {{ log.structure_validation.resource_types|join(', ') }}</p>
+                                    
+                                    {% if log.structure_validation.errors %}
+                                        <p><strong>Errors:</strong></p>
+                                        <ul>
+                                            {% for error in log.structure_validation.errors %}
+                                                <li>{{ error }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                    
+                                    {% if log.structure_validation.warnings %}
+                                        <p><strong>Warnings:</strong></p>
+                                        <ul>
+                                            {% for warning in log.structure_validation.warnings %}
+                                                <li>{{ warning }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Groundedness Evaluation Logs -->
+                        {% if log.groundedness_evaluation %}
+                            <div class="agent-section">
+                                <h4>🎯 Groundedness Evaluation (LLM Judge)</h4>
+                                <div class="agent-details">
+                                    {% set eval = log.groundedness_evaluation %}
+                                    <p><strong>Score:</strong> {{ eval.groundedness_score }}/5</p>
+                                    <p><strong>Acceptable:</strong> {{ 'Yes' if eval.is_acceptable else 'No' }}</p>
+                                    <p><strong>Assessment:</strong> {{ eval.overall_assessment }}</p>
+                                    
+                                    {% if eval.hallucinations_detected %}
+                                        <p><strong>Hallucinations Detected:</strong></p>
+                                        <ul>
+                                            {% for hallucination in eval.hallucinations_detected %}
+                                                <li>{{ hallucination }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                    
+                                    {% if eval.missing_information %}
+                                        <p><strong>Missing Information:</strong></p>
+                                        <ul>
+                                            {% for missing in eval.missing_information %}
+                                                <li>{{ missing }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                    
+                                    {% if eval.accuracy_issues %}
+                                        <p><strong>Accuracy Issues:</strong></p>
+                                        <ul>
+                                            {% for issue in eval.accuracy_issues %}
+                                                <li>{{ issue }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                    
+                                    {% if eval.improvement_feedback %}
+                                        <p><strong>Improvement Feedback:</strong> {{ eval.improvement_feedback }}</p>
+                                    {% endif %}
+                                    
+                                    {% if eval.priority_fixes %}
+                                        <p><strong>Priority Fixes:</strong></p>
+                                        <ul>
+                                            {% for fix in eval.priority_fixes %}
+                                                <li>{{ fix }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                    
+                                    <!-- Judge Inputs & Outputs -->
+                                    {% if eval.judge_logs %}
+                                        {% for judge_log in eval.judge_logs %}
+                                            <details>
+                                                <summary>View Judge Inputs & Outputs</summary>
+                                                <div class="judge-details">
+                                                    <p><strong>Original Text Length:</strong> {{ judge_log.inputs.original_text_length }} characters</p>
+                                                    <p><strong>FHIR JSON Length:</strong> {{ judge_log.inputs.fhir_json_length }} characters</p>
+                                                    
+                                                    <details>
+                                                        <summary>View Judge Prompt</summary>
+                                                        <pre class="prompt-content">{{ judge_log.prompt }}</pre>
+                                                    </details>
+                                                    
+                                                    <details>
+                                                        <summary>View Raw Judge Response</summary>
+                                                        <pre class="response-content">{{ judge_log.raw_response }}</pre>
+                                                    </details>
+                                                    
+                                                    {% if judge_log.errors %}
+                                                        <p><strong>Judge Errors:</strong></p>
+                                                        <ul>
+                                                            {% for error in judge_log.errors %}
+                                                                <li>{{ error }}</li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    {% endif %}
+                                                </div>
+                                            </details>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Errors -->
+                        {% if log.errors %}
+                            <div class="agent-section error">
+                                <h4>❌ Errors</h4>
+                                <ul>
+                                    {% for error in log.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Retry Reason -->
+                        {% if log.retry_reason %}
+                            <div class="retry-reason">
+                                <p><strong>Retry Reason:</strong> {{ log.retry_reason }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="log-section">
+                <h2>📋 Detailed Conversion Logs</h2>
+                <p>No detailed conversion logs are available. This could be because:</p>
+                <ul>
+                    <li>The FHIR conversion has not been run yet</li>
+                    <li>The conversion failed before detailed logging could be captured</li>
+                    <li>There was an error in the conversion process</li>
+                </ul>
+                <p>Please try running the FHIR conversion again to generate detailed logs.</p>
+            </div>
+        {% endif %}
+
+        <!-- Final FHIR Bundle -->
+        {% if fhir_data.fhir_bundle %}
+            <div class="log-section">
+                <h2>📦 Final FHIR Bundle</h2>
+                <details>
+                    <summary>View Complete FHIR Bundle</summary>
+                    <pre class="fhir-content">{{ fhir_data.fhir_bundle | tojson(indent=2) }}</pre>
+                </details>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header-section {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+}
+
+.header-section h1 {
+    color: #0d1846;
+    margin-bottom: 10px;
+}
+
+.back-link {
+    margin-top: 15px;
+}
+
+.log-section {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.log-section.success {
+    border-left: 5px solid #28a745;
+}
+
+.log-section.error {
+    border-left: 5px solid #dc3545;
+}
+
+.attempt-log {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.attempt-log h3 {
+    color: #0d1846;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #0079c8;
+}
+
+.agent-section {
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.agent-section.error {
+    border-left: 4px solid #dc3545;
+    background-color: #fff5f5;
+}
+
+.agent-section h4 {
+    color: #0d1846;
+    margin-bottom: 10px;
+}
+
+.agent-details p {
+    margin: 8px 0;
+}
+
+.agent-details ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.agent-details li {
+    margin: 5px 0;
+}
+
+.document-content, .conversion-summary {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin: 10px 0;
+}
+
+.text-content, .prompt-content, .response-content, .fhir-content {
+    background-color: #e9ecef;
+    padding: 15px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.judge-details {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin: 10px 0;
+}
+
+.retry-reason {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 15px;
+}
+
+details {
+    margin: 10px 0;
+}
+
+summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #0079c8;
+    padding: 8px;
+    background-color: #e3f2fd;
+    border-radius: 4px;
+}
+
+summary:hover {
+    background-color: #bbdefb;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #0079c8;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+}
+
+.judge-text {
+    background-color: #f8f9fa;
+    border: 1px solid #28a745;
+    border-radius: 4px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    max-height: 600px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #155724;
+}
+
+.judge-logs-content {
+    margin-top: 10px;
+}
+</style>
+{% endblock %}

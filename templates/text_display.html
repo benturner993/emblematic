@@ -2,6 +2,8 @@
 
 {% block title %}Text Extraction - AI Emblematic{% endblock %}
 
+{% set file_hash = file_hash %}
+
 {% block content %}
 <style>
     .text-display-container {
@@ -317,6 +319,20 @@
         margin-left: 10px;
     }
     
+    .groundedness-score {
+        font-size: 1.1rem;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 15px;
+        color: white;
+    }
+    
+    .score-5 { background-color: #28a745; }
+    .score-4 { background-color: #20c997; }
+    .score-3 { background-color: #ffc107; color: #212529; }
+    .score-2 { background-color: #fd7e14; }
+    .score-1 { background-color: #dc3545; }
+    
     .document-type-badge {
         display: inline-block;
         background-color: #0079c8;
@@ -521,7 +537,7 @@ function summariseDocument() {
             <div class="analysis-item" style="border-left-color: #dc3545;">
                 <h4>Error</h4>
                 <p>Failed to analyze document: ${error.message}</p>
-                <p>Please make sure your OpenAI API key is configured correctly.</p>
+                <p>Please make sure your Azure OpenAI credentials are configured correctly.</p>
             </div>
         `;
         
@@ -627,12 +643,22 @@ function convertToFHIR() {
     
     // Show FHIR section with loading message
     fhirSection.style.display = 'block';
-    fhirContent.innerHTML = '<div class="analysis-item"><h4>Processing...</h4><p>Converting document to FHIR format. This may take a few moments.</p></div>';
+    fhirContent.innerHTML = '<div class="analysis-item"><h4>Processing...</h4><p>Converting document to FHIR format and evaluating groundedness. This may take a few moments.</p></div>';
     
     // Scroll to FHIR section
     fhirSection.scrollIntoView({ behavior: 'smooth' });
     
-    // Make API call
+    // For now, let's use the regular fetch API to ensure it works
+    // We can add SSE back later once we confirm the basic functionality works
+    console.log('Using regular fetch API for FHIR conversion...');
+    performRegularFhirConversion(fileHash, fhirContent, fhirBtn);
+}
+
+function performRegularFhirConversion(fileHash, fhirContent, fhirBtn) {
+    // Show simple running status
+    fhirContent.innerHTML = '<div class="analysis-item"><h4>🏥 Converting to FHIR...</h4><p>Processing document. This may take a few moments.</p></div>';
+    
+    // Regular fetch API without SSE
     fetch(`/convert-fhir/${fileHash}`, {
         method: 'POST',
         headers: {
@@ -660,7 +686,8 @@ function convertToFHIR() {
             <div class="analysis-item" style="border-left-color: #dc3545;">
                 <h4>Error</h4>
                 <p>Failed to convert to FHIR: ${error.message}</p>
-                <p>Please make sure your OpenAI API key is configured correctly.</p>
+                <p>Please make sure your Azure OpenAI credentials are configured correctly.</p>
+                <a href="/fhir-logs/${fileHash}" class="btn btn-secondary" target="_blank">View Detailed Logs</a>
             </div>
         `;
         
@@ -668,6 +695,149 @@ function convertToFHIR() {
         fhirBtn.disabled = false;
         fhirBtn.textContent = '🏥 Convert to FHIR';
     });
+}
+
+function handleFhirUpdate(data, fhirContent, fhirBtn, eventSource) {
+    const status = data.status;
+    
+    switch (status) {
+        case 'starting':
+            fhirContent.innerHTML = '<div class="analysis-item"><h4>🚀 Starting...</h4><p>Initializing FHIR conversion...</p></div>';
+            break;
+            
+        case 'attempt':
+            fhirContent.innerHTML = `
+                <div class="analysis-item">
+                    <h4>🔄 Attempt ${data.attempt}</h4>
+                    <p>${data.message}</p>
+                </div>
+            `;
+            break;
+            
+        case 'validating':
+            fhirContent.innerHTML = `
+                <div class="analysis-item">
+                    <h4>🔍 Validating Structure</h4>
+                    <p>${data.message}</p>
+                </div>
+            `;
+            break;
+            
+        case 'evaluating':
+            fhirContent.innerHTML = `
+                <div class="analysis-item">
+                    <h4>🎯 Evaluating Quality</h4>
+                    <p>${data.message}</p>
+                </div>
+            `;
+            break;
+            
+        case 'groundedness_result':
+            const scoreColor = data.score >= 5 ? '#28a745' : data.score >= 3 ? '#ffc107' : '#dc3545';
+            const acceptableText = data.is_acceptable ? '✅ Acceptable' : '❌ Not Acceptable';
+            const acceptableColor = data.is_acceptable ? '#28a745' : '#dc3545';
+            
+            let groundednessHtml = `
+                <div class="analysis-item">
+                    <h4>📊 Quality Assessment - Attempt ${data.attempt || 'Current'}</h4>
+                    <p><strong>Groundedness Score:</strong> <span class="confidence-badge" style="background-color: ${scoreColor};">${data.score}/5</span></p>
+                    <p><strong>Acceptable Quality:</strong> <span style="color: ${acceptableColor}; font-weight: bold;">${acceptableText}</span></p>
+                    <p><strong>Assessment:</strong> ${data.assessment}</p>
+            `;
+            
+            if (data.feedback) {
+                groundednessHtml += `<p><strong>Improvement Feedback:</strong> ${data.feedback}</p>`;
+            }
+            
+            if (data.priority_fixes && data.priority_fixes.length > 0) {
+                groundednessHtml += `
+                    <p><strong>Priority Fixes Needed:</strong></p>
+                    <ul>
+                        ${data.priority_fixes.map(fix => `<li>${fix}</li>`).join('')}
+                    </ul>
+                `;
+            }
+            
+            if (data.hallucinations && data.hallucinations.length > 0) {
+                groundednessHtml += `
+                    <p><strong>⚠️ Hallucinations Detected:</strong></p>
+                    <ul>
+                        ${data.hallucinations.map(h => `<li>${h}</li>`).join('')}
+                    </ul>
+                `;
+            }
+            
+            if (data.missing_info && data.missing_info.length > 0) {
+                groundednessHtml += `
+                    <p><strong>📝 Missing Information:</strong></p>
+                    <ul>
+                        ${data.missing_info.map(m => `<li>${m}</li>`).join('')}
+                    </ul>
+                `;
+            }
+            
+            if (data.accuracy_issues && data.accuracy_issues.length > 0) {
+                groundednessHtml += `
+                    <p><strong>🔍 Accuracy Issues:</strong></p>
+                    <ul>
+                        ${data.accuracy_issues.map(a => `<li>${a}</li>`).join('')}
+                    </ul>
+                `;
+            }
+            
+            groundednessHtml += `</div>`;
+            fhirContent.innerHTML = groundednessHtml;
+            break;
+            
+        case 'retry':
+            fhirContent.innerHTML = `
+                <div class="analysis-item" style="border-left-color: #ffc107;">
+                    <h4>🔄 Retrying with Feedback</h4>
+                    <p>${data.message}</p>
+                    <p><strong>Attempt:</strong> ${data.attempt || 'Current'} / ${data.max_attempts || 3}</p>
+                    <p><strong>Next Attempt:</strong> ${data.next_attempt || 'In Progress'}</p>
+                    ${data.feedback ? `<p><strong>Improvement Focus:</strong> ${data.feedback}</p>` : ''}
+                </div>
+            `;
+            break;
+            
+        case 'success':
+            displayFhirResults(data.result);
+            fhirBtn.disabled = false;
+            fhirBtn.textContent = '🏥 Convert to FHIR';
+            eventSource.close();
+            break;
+            
+        case 'failed':
+        case 'error':
+            fhirContent.innerHTML = `
+                <div class="analysis-item" style="border-left-color: #dc3545;">
+                    <h4>❌ ${status === 'failed' ? 'Conversion Failed' : 'Error'}</h4>
+                    <p>${data.message}</p>
+                    ${data.result ? `<p><strong>Final Result:</strong> ${JSON.stringify(data.result, null, 2)}</p>` : ''}
+                </div>
+            `;
+            fhirBtn.disabled = false;
+            fhirBtn.textContent = '🏥 Convert to FHIR';
+            eventSource.close();
+            break;
+            
+        case 'structure_error':
+            fhirContent.innerHTML = `
+                <div class="analysis-item" style="border-left-color: #dc3545;">
+                    <h4>❌ Structure Validation Failed</h4>
+                    <p>${data.message}</p>
+                    <p><strong>Errors:</strong></p>
+                    <ul>
+                        ${data.errors.map(error => `<li>${error}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            break;
+            
+        default:
+            console.log('Unknown status:', status, data);
+    }
 }
 
 function displayFhirResults(data) {
@@ -700,6 +870,47 @@ function displayFhirResults(data) {
             }
         }
         
+        if (data.groundedness) {
+            html += `
+                <h5>Groundedness Evaluation:</h5>
+                <p><strong>Groundedness Score:</strong> ${data.groundedness.groundedness_score}/5</p>
+                <p><strong>Assessment:</strong> ${data.groundedness.overall_assessment}</p>
+            `;
+            
+            if (data.groundedness.hallucinations_detected && data.groundedness.hallucinations_detected.length > 0) {
+                html += `
+                    <p><strong>Hallucinations Detected:</strong></p>
+                    <ul>
+                        ${data.groundedness.hallucinations_detected.map(h => `<li>${h}</li>`).join('')}
+                    </ul>
+                `;
+            }
+        }
+        
+        if (data.feedback_history && data.feedback_history.length > 0) {
+            html += `
+                <h5>Learning History:</h5>
+                <p>This conversion was improved through ${data.feedback_history.length} feedback iterations:</p>
+                <ul>
+                    ${data.feedback_history.map((feedback, index) => `
+                        <li>
+                            <strong>Attempt ${index + 1}:</strong> Score ${feedback.groundedness_score}/5
+                            ${feedback.improvement_feedback ? `<br/>→ ${feedback.improvement_feedback}` : ''}
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+        }
+        
+        // Add link to detailed logs for errors
+        const pathParts = window.location.pathname.split('/');
+        const fileHash = pathParts[pathParts.length - 1];
+        html += `
+            <div style="margin-top: 15px;">
+                <a href="/fhir-logs/${fileHash}" class="btn btn-secondary" target="_blank">View Detailed Logs</a>
+            </div>
+        `;
+        
         html += `</div>`;
         fhirContent.innerHTML = html;
         return;
@@ -707,16 +918,93 @@ function displayFhirResults(data) {
     
     const validation = data.validation;
     const fhirBundle = data.fhir_bundle;
+    const groundedness = data.groundedness;
+    
+    // Determine success status based on groundedness score
+    const isHighQuality = groundedness && groundedness.groundedness_score >= 5;
+    const statusIcon = isHighQuality ? '✅' : '⚠️';
+    const statusText = isHighQuality ? 'FHIR Conversion Successful' : 'FHIR Conversion Completed (Quality Issues)';
     
     let html = `
         <div class="analysis-item">
-            <h4>✅ FHIR Conversion Successful</h4>
+            <h4>${statusIcon} ${statusText}</h4>
             <p><strong>Validation Score:</strong> <span class="confidence-badge">${validation.validation_score}%</span></p>
             <p><strong>Resource Count:</strong> ${validation.resource_count}</p>
             <p><strong>Resource Types:</strong> ${validation.resource_types.join(', ')}</p>
             <p><strong>Status:</strong> ${validation.is_valid ? 'Valid FHIR Bundle' : 'Invalid FHIR Bundle'}</p>
         </div>
     `;
+    
+    // Add groundedness evaluation results
+    if (groundedness) {
+        const scoreColor = groundedness.groundedness_score >= 5 ? '#28a745' : 
+                          groundedness.groundedness_score >= 3 ? '#ffc107' : '#dc3545';
+        const acceptableText = groundedness.is_acceptable ? '✅ Yes' : '❌ No';
+        const acceptableColor = groundedness.is_acceptable ? '#28a745' : '#dc3545';
+        
+        html += `
+            <div class="analysis-item">
+                <h4>🎯 Groundedness Evaluation</h4>
+                <p><strong>Groundedness Score:</strong> <span class="confidence-badge" style="background-color: ${scoreColor};">${groundedness.groundedness_score}/5</span></p>
+                <p><strong>Assessment:</strong> ${groundedness.overall_assessment}</p>
+                <p><strong>Acceptable Quality:</strong> <span style="color: ${acceptableColor}; font-weight: bold;">${acceptableText}</span></p>
+        `;
+        
+        if (groundedness.hallucinations_detected && groundedness.hallucinations_detected.length > 0) {
+            html += `
+                <p><strong>⚠️ Hallucinations Detected:</strong></p>
+                <ul>
+                    ${groundedness.hallucinations_detected.map(h => `<li>${h}</li>`).join('')}
+                </ul>
+            `;
+        }
+        
+        if (groundedness.missing_information && groundedness.missing_information.length > 0) {
+            html += `
+                <p><strong>📝 Missing Information:</strong></p>
+                <ul>
+                    ${groundedness.missing_information.map(m => `<li>${m}</li>`).join('')}
+                </ul>
+            `;
+        }
+        
+        if (groundedness.accuracy_issues && groundedness.accuracy_issues.length > 0) {
+            html += `
+                <p><strong>🔍 Accuracy Issues:</strong></p>
+                <ul>
+                    ${groundedness.accuracy_issues.map(a => `<li>${a}</li>`).join('')}
+                </ul>
+            `;
+        }
+        
+        if (groundedness.improvement_feedback) {
+            html += `
+                <p><strong>💡 Improvement Feedback:</strong> ${groundedness.improvement_feedback}</p>
+            `;
+        }
+        
+        if (groundedness.priority_fixes && groundedness.priority_fixes.length > 0) {
+            html += `
+                <p><strong>🎯 Priority Fixes:</strong></p>
+                <ul>
+                    ${groundedness.priority_fixes.map(fix => `<li>${fix}</li>`).join('')}
+                </ul>
+            `;
+        }
+        
+        html += `</div>`;
+    }
+    
+    // Add link to detailed logs
+    if (data.detailed_logs && data.detailed_logs.length > 0) {
+        html += `
+            <div class="analysis-item">
+                <h4>📋 Conversion Logs</h4>
+                <p>Detailed logs of all conversion attempts and LLM interactions are available.</p>
+                <a href="/fhir-logs/${fileHash}" class="btn btn-secondary" target="_blank">View Detailed Logs</a>
+            </div>
+        `;
+    }
     
     if (validation.warnings && validation.warnings.length > 0) {
         html += `
