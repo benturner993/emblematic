@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}AI Emblematic{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='bupa.png') }}"> <!-- Favicon -->
+    <style>
+        body {
+            padding: 0;
+            margin: 0; /* Remove default margin */
+            font-family: 'Montserrat', sans-serif; /* Apply Montserrat font */
+            color: #000000; /* Black text color */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Ensure the content spans the full height of the viewport */
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+            position: relative; /* Set position to relative */
+        }
+        .header {
+            background-color: #0d1846;
+            color: white; /* Header text color */
+            padding: 10px;
+            display: flex; /* Use flexbox */
+            align-items: center; /* Align items vertically */
+            width: 100%; /* Make header span the full width */
+            font-size: 12px; /* Reduce font size */
+        }
+        .toolbar {
+            flex-grow: 1; /* Grow to fill remaining space */
+            display: flex; /* Use flexbox */
+            justify-content: flex-end; /* Align items to the right */
+        }
+        .toolbar a {
+            color: white; /* Link text color */
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .login {
+            margin-right: 20px; /* Add spacing between "Login" button and edge of the page */
+        }
+        .logo {
+            width: 50px; /* Set width to 50px */
+            height: 50px; /* Set height to 50px */
+            position: absolute; /* Position absolutely */
+            top: 10px; /* Distance from top */
+            left: 15px; /* Distance from left */
+            z-index: 1000; /* Make sure the logo stays on top */
+        }
+        .main-content {
+            flex: 1; /* Fill remaining vertical space */
+            padding: 20px; /* Add some padding */
+            max-width: 1200px; /* Set maximum width for content */
+            margin: 0 auto; /* Center content horizontally */
+        }
+        .footer {
+            background-color: #0d1846; /* Footer color */
+            color: white; /* Footer text color */
+            padding: 10px;
+            text-align: center; /* Align text to the center */
+            width: 100%; /* Make the footer span the full width */
+            margin-top: auto; /* Push the footer to the bottom */
+        }
+
+        /* Button styling */
+        button {
+            background-color: #0079c8; /* Changed to #0079c8 */
+            border: none; /* Remove border */
+            color: white; /* White text */
+            padding: 8px 16px; /* 1/4 of the original size */
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 12px; /* 1/4 of the original size */
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px; /* 1/2 of the original size */
+        }
+
+        /* Change the color of the button on hover */
+        button:hover {
+            background-color: #005fa3; /* Darker blue */
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet"> <!-- Link to Montserrat font -->
+</head>
+<body>
+    <a href="/">
+        <img src="{{ url_for('static', filename='bupa.png') }}" class="logo" alt="Logo" width="50" height="50"> <!-- Set width and height -->
+    </a>
+    <div class="header">
+        <div class="toolbar">
+            <div class="login">
+                <a href="/">Home</a>
+                <a href="/about">About</a>
+            </div>
+        </div>
+    </div>
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+    <div class="footer">
+        &copy; 2025 AI Emblematic. This is a non-production application, please proceed with caution.
+    </div>
+</body>

@@ -1,0 +1,771 @@
+{% extends "base.html" %}
+
+{% block title %}Text Extraction - AI Emblematic{% endblock %}
+
+{% block content %}
+<style>
+    .text-display-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .header-info {
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .file-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .file-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #0d1846;
+    }
+    
+    .timestamp {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .text-content {
+        background-color: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .text-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #0079c8;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .text-header:hover {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 10px;
+        margin: -10px -10px 20px -10px;
+    }
+    
+    .minimize-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #0079c8;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 3px;
+        transition: all 0.2s ease;
+    }
+    
+    .minimize-btn:hover {
+        background-color: #e9ecef;
+        transform: scale(1.1);
+    }
+    
+    .extracted-text {
+        line-height: 1.6;
+        font-size: 1rem;
+        color: #333;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        padding: 20px;
+        background-color: #fafafa;
+        transition: all 0.3s ease;
+    }
+    
+    .extracted-text.minimized {
+        max-height: 0;
+        padding: 0 20px;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .text-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #0d1846;
+    }
+    
+    .text-stats {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .extracted-text {
+        line-height: 1.6;
+        font-size: 1rem;
+        color: #333;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        padding: 20px;
+        background-color: #fafafa;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background-color: #0079c8;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #005fa3;
+        transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #545b62;
+        transform: translateY(-2px);
+    }
+    
+    .copy-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        margin-left: 10px;
+    }
+    
+    .copy-btn:hover {
+        background-color: #218838;
+    }
+    
+    .copy-success {
+        background-color: #28a745 !important;
+    }
+    
+    .summarise-btn {
+        background-color: #0079c8;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 15px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .summarise-btn:hover {
+        background-color: #005fa3;
+        transform: translateY(-2px);
+    }
+    
+    .summarise-btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .fhir-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 15px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .fhir-btn:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+    }
+    
+    .fhir-btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .analysis-section {
+        background-color: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .analysis-header {
+        border-bottom: 2px solid #0079c8;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .analysis-header:hover {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 10px;
+        margin: -10px -10px 20px -10px;
+    }
+    
+    .analysis-header h3 {
+        color: #0d1846;
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    
+    .analysis-content {
+        line-height: 1.6;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .analysis-content.minimized {
+        max-height: 0;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+    
+    .analysis-item {
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #0079c8;
+    }
+    
+    .analysis-item h4 {
+        color: #0d1846;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+    
+    .analysis-item ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .analysis-item li {
+        margin-bottom: 5px;
+    }
+    
+    .confidence-badge {
+        display: inline-block;
+        background-color: #28a745;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin-left: 10px;
+    }
+    
+    .document-type-badge {
+        display: inline-block;
+        background-color: #0079c8;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    
+    @media (max-width: 768px) {
+        .file-info {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+
+<div class="text-display-container">
+    <div class="header-info">
+        <div class="file-info">
+            <div class="file-name">📄 {{ data.filename }}</div>
+            <div class="timestamp">Processed: {{ data.timestamp[:19].replace('T', ' ') }}</div>
+        </div>
+    </div>
+    
+    <div class="text-content">
+        <div class="text-header" onclick="toggleMinimize()">
+            <div class="text-title">Extracted Text</div>
+            <div class="text-stats">
+                {{ data.text|length }} characters
+                <button class="copy-btn" onclick="copyToClipboard()">Copy Text</button>
+                <button class="minimize-btn" id="minimizeBtn">−</button>
+            </div>
+        </div>
+        
+        <div class="extracted-text" id="extractedText">{{ data.text }}</div>
+    </div>
+    
+    <!-- AI Summary Results Section -->
+    <div class="analysis-section" id="analysisSection" style="display: none;">
+        <div class="analysis-header" onclick="toggleAnalysisMinimize()">
+            <h3>🤖 AI Summary</h3>
+            <button class="minimize-btn" id="analysisMinimizeBtn">−</button>
+        </div>
+        <div class="analysis-content" id="analysisContent">
+            <!-- Analysis results will be populated here -->
+        </div>
+    </div>
+    
+    <!-- FHIR Conversion Results Section -->
+    <div class="analysis-section" id="fhirSection" style="display: none;">
+        <div class="analysis-header" onclick="toggleFhirMinimize()">
+            <h3>🏥 FHIR Conversion</h3>
+            <button class="minimize-btn" id="fhirMinimizeBtn">−</button>
+        </div>
+        <div class="analysis-content" id="fhirContent">
+            <!-- FHIR results will be populated here -->
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Upload Another Document</a>
+        <button class="summarise-btn" onclick="summariseDocument()" id="summariseBtn">
+            🤖 Summarise
+        </button>
+        <button class="fhir-btn" onclick="convertToFHIR()" id="fhirBtn">
+            🏥 Convert to FHIR
+        </button>
+        <a href="{{ url_for('about') }}" class="btn btn-secondary">Learn More</a>
+    </div>
+</div>
+
+<script>
+function copyToClipboard() {
+    const textElement = document.getElementById('extractedText');
+    const text = textElement.textContent;
+    
+    navigator.clipboard.writeText(text).then(function() {
+        const copyBtn = document.querySelector('.copy-btn');
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        copyBtn.classList.add('copy-success');
+        
+        setTimeout(function() {
+            copyBtn.textContent = originalText;
+            copyBtn.classList.remove('copy-success');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Could not copy text: ', err);
+        alert('Failed to copy text to clipboard');
+    });
+}
+
+function toggleMinimize() {
+    const textElement = document.getElementById('extractedText');
+    const minimizeBtn = document.getElementById('minimizeBtn');
+    
+    if (textElement.classList.contains('minimized')) {
+        // Expand
+        textElement.classList.remove('minimized');
+        minimizeBtn.textContent = '−';
+        minimizeBtn.title = 'Minimize';
+    } else {
+        // Minimize
+        textElement.classList.add('minimized');
+        minimizeBtn.textContent = '+';
+        minimizeBtn.title = 'Expand';
+    }
+}
+
+function toggleAnalysisMinimize() {
+    const analysisContent = document.getElementById('analysisContent');
+    const analysisMinimizeBtn = document.getElementById('analysisMinimizeBtn');
+    
+    if (analysisContent.classList.contains('minimized')) {
+        // Expand
+        analysisContent.classList.remove('minimized');
+        analysisMinimizeBtn.textContent = '−';
+        analysisMinimizeBtn.title = 'Minimize';
+    } else {
+        // Minimize
+        analysisContent.classList.add('minimized');
+        analysisMinimizeBtn.textContent = '+';
+        analysisMinimizeBtn.title = 'Expand';
+    }
+}
+
+function toggleFhirMinimize() {
+    const fhirContent = document.getElementById('fhirContent');
+    const fhirMinimizeBtn = document.getElementById('fhirMinimizeBtn');
+    
+    if (fhirContent.classList.contains('minimized')) {
+        // Expand
+        fhirContent.classList.remove('minimized');
+        fhirMinimizeBtn.textContent = '−';
+        fhirMinimizeBtn.title = 'Minimize';
+    } else {
+        // Minimize
+        fhirContent.classList.add('minimized');
+        fhirMinimizeBtn.textContent = '+';
+        fhirMinimizeBtn.title = 'Expand';
+    }
+}
+
+function summariseDocument() {
+    const summariseBtn = document.getElementById('summariseBtn');
+    const analysisSection = document.getElementById('analysisSection');
+    const analysisContent = document.getElementById('analysisContent');
+    
+    // Get the file hash from the URL
+    const pathParts = window.location.pathname.split('/');
+    const fileHash = pathParts[pathParts.length - 1];
+    
+    // Disable button and show loading state
+    summariseBtn.disabled = true;
+    summariseBtn.textContent = '🤖 Analyzing...';
+    
+    // Show analysis section with loading message
+    analysisSection.style.display = 'block';
+    analysisContent.innerHTML = '<div class="analysis-item"><h4>Processing...</h4><p>AI is analyzing your document. This may take a few moments.</p></div>';
+    
+    // Scroll to analysis section
+    analysisSection.scrollIntoView({ behavior: 'smooth' });
+    
+    // Make API call
+    fetch(`/summarise/${fileHash}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Display the analysis results
+        displayAnalysisResults(data);
+        
+        // Re-enable button
+        summariseBtn.disabled = false;
+        summariseBtn.textContent = '🤖 Summarise';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Show error message
+        analysisContent.innerHTML = `
+            <div class="analysis-item" style="border-left-color: #dc3545;">
+                <h4>Error</h4>
+                <p>Failed to analyze document: ${error.message}</p>
+                <p>Please make sure your OpenAI API key is configured correctly.</p>
+            </div>
+        `;
+        
+        // Re-enable button
+        summariseBtn.disabled = false;
+        summariseBtn.textContent = '🤖 Summarise';
+    });
+}
+
+function displayAnalysisResults(data) {
+    const analysisContent = document.getElementById('analysisContent');
+    
+    if (data.is_medical === false) {
+        // Display freeform analysis for non-medical documents
+        let html = `
+            <div class="analysis-item">
+                <h4>📋 Document Analysis</h4>
+                <div style="white-space: pre-line; font-family: monospace; background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #0079c8;">
+                    ${data.freeform_analysis}
+                </div>
+            </div>
+        `;
+        analysisContent.innerHTML = html;
+        return;
+    }
+    
+    // Display structured analysis for medical documents
+    const classification = data.classification;
+    const summary = data.summary;
+    
+    let html = `
+        <div class="analysis-item">
+            <h4>📋 Document Classification</h4>
+            <p><strong>Type:</strong> <span class="document-type-badge">${classification.document_type}</span></p>
+            <p><strong>Confidence:</strong> <span class="confidence-badge">${Math.round(classification.confidence * 100)}%</span></p>
+            <p><strong>Language:</strong> ${classification.language}</p>
+            <p><strong>Structured:</strong> ${classification.is_structured ? 'Yes' : 'No'}</p>
+            <p><strong>Keywords:</strong> ${classification.keywords.join(', ')}</p>
+        </div>
+        
+        <div class="analysis-item">
+            <h4>📝 Document Summary</h4>
+            <p><strong>Main Topic:</strong> ${summary.main_topic}</p>
+            <p><strong>Summary:</strong> ${summary.summary}</p>
+        </div>
+        
+        <div class="analysis-item">
+            <h4>🔑 Key Points</h4>
+            <ul>
+                ${summary.key_points.map(point => `<li>${point}</li>`).join('')}
+            </ul>
+        </div>
+    `;
+    
+    if (summary.action_items && summary.action_items.length > 0) {
+        html += `
+            <div class="analysis-item">
+                <h4>✅ Action Items</h4>
+                <ul>
+                    ${summary.action_items.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    if (summary.important_dates && summary.important_dates.length > 0) {
+        html += `
+            <div class="analysis-item">
+                <h4>📅 Important Dates</h4>
+                <ul>
+                    ${summary.important_dates.map(date => `<li>${date}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    if (summary.entities && summary.entities.length > 0) {
+        html += `
+            <div class="analysis-item">
+                <h4>👥 Key Entities</h4>
+                <ul>
+                    ${summary.entities.map(entity => `<li>${entity}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    analysisContent.innerHTML = html;
+}
+
+function convertToFHIR() {
+    const fhirBtn = document.getElementById('fhirBtn');
+    const fhirSection = document.getElementById('fhirSection');
+    const fhirContent = document.getElementById('fhirContent');
+    
+    // Get the file hash from the URL
+    const pathParts = window.location.pathname.split('/');
+    const fileHash = pathParts[pathParts.length - 1];
+    
+    // Disable button and show loading state
+    fhirBtn.disabled = true;
+    fhirBtn.textContent = '🏥 Converting...';
+    
+    // Show FHIR section with loading message
+    fhirSection.style.display = 'block';
+    fhirContent.innerHTML = '<div class="analysis-item"><h4>Processing...</h4><p>Converting document to FHIR format. This may take a few moments.</p></div>';
+    
+    // Scroll to FHIR section
+    fhirSection.scrollIntoView({ behavior: 'smooth' });
+    
+    // Make API call
+    fetch(`/convert-fhir/${fileHash}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Display the FHIR results
+        displayFhirResults(data);
+        
+        // Re-enable button
+        fhirBtn.disabled = false;
+        fhirBtn.textContent = '🏥 Convert to FHIR';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Show error message
+        fhirContent.innerHTML = `
+            <div class="analysis-item" style="border-left-color: #dc3545;">
+                <h4>Error</h4>
+                <p>Failed to convert to FHIR: ${error.message}</p>
+                <p>Please make sure your OpenAI API key is configured correctly.</p>
+            </div>
+        `;
+        
+        // Re-enable button
+        fhirBtn.disabled = false;
+        fhirBtn.textContent = '🏥 Convert to FHIR';
+    });
+}
+
+function displayFhirResults(data) {
+    const fhirContent = document.getElementById('fhirContent');
+    
+    if (data.error) {
+        let html = `
+            <div class="analysis-item" style="border-left-color: #dc3545;">
+                <h4>❌ Conversion Failed</h4>
+                <p><strong>Error:</strong> ${data.error}</p>
+        `;
+        
+        if (data.validation) {
+            html += `
+                <h5>Validation Results:</h5>
+                <p><strong>Validation Score:</strong> ${data.validation.validation_score}%</p>
+                <p><strong>Errors:</strong></p>
+                <ul>
+                    ${data.validation.errors.map(error => `<li>${error}</li>`).join('')}
+                </ul>
+            `;
+            
+            if (data.validation.warnings && data.validation.warnings.length > 0) {
+                html += `
+                    <p><strong>Warnings:</strong></p>
+                    <ul>
+                        ${data.validation.warnings.map(warning => `<li>${warning}</li>`).join('')}
+                    </ul>
+                `;
+            }
+        }
+        
+        html += `</div>`;
+        fhirContent.innerHTML = html;
+        return;
+    }
+    
+    const validation = data.validation;
+    const fhirBundle = data.fhir_bundle;
+    
+    let html = `
+        <div class="analysis-item">
+            <h4>✅ FHIR Conversion Successful</h4>
+            <p><strong>Validation Score:</strong> <span class="confidence-badge">${validation.validation_score}%</span></p>
+            <p><strong>Resource Count:</strong> ${validation.resource_count}</p>
+            <p><strong>Resource Types:</strong> ${validation.resource_types.join(', ')}</p>
+            <p><strong>Status:</strong> ${validation.is_valid ? 'Valid FHIR Bundle' : 'Invalid FHIR Bundle'}</p>
+        </div>
+    `;
+    
+    if (validation.warnings && validation.warnings.length > 0) {
+        html += `
+            <div class="analysis-item">
+                <h4>⚠️ Validation Warnings</h4>
+                <ul>
+                    ${validation.warnings.map(warning => `<li>${warning}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    html += `
+        <div class="analysis-item">
+            <h4>📋 FHIR Bundle</h4>
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; max-height: 400px; overflow-y: auto;">
+                <pre style="white-space: pre-wrap; font-family: monospace; font-size: 0.9rem; margin: 0;">${JSON.stringify(fhirBundle, null, 2)}</pre>
+            </div>
+            <button class="copy-btn" onclick="copyFhirToClipboard()" style="margin-top: 10px;">Copy FHIR JSON</button>
+        </div>
+    `;
+    
+    fhirContent.innerHTML = html;
+}
+
+function copyFhirToClipboard() {
+    const fhirContent = document.getElementById('fhirContent');
+    const preElement = fhirContent.querySelector('pre');
+    if (preElement) {
+        const fhirText = preElement.textContent;
+        
+        navigator.clipboard.writeText(fhirText).then(function() {
+            const copyBtn = fhirContent.querySelector('.copy-btn');
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            copyBtn.classList.add('copy-success');
+            
+            setTimeout(function() {
+                copyBtn.textContent = originalText;
+                copyBtn.classList.remove('copy-success');
+            }, 2000);
+        }).catch(function(err) {
+            console.error('Could not copy FHIR text: ', err);
+            alert('Failed to copy FHIR JSON to clipboard');
+        });
+    }
+}
+
+// Auto-scroll to top when page loads
+window.scrollTo(0, 0);
+</script>
+{% endblock %}

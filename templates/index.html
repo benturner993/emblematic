@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Home - AI Emblematic{% endblock %}
+
+{% block content %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 40px 20px;
+        margin: -20px calc(-50vw + 50%) 40px calc(-50vw + 50%);
+        background-image: url("{{ url_for('static', filename='online-A-long-journey.png') }}");
+        background-size: 100% auto;
+        background-position: 50% 30%; /* Adjust these numbers: first number = horizontal (0% = left, 50% = center, 100% = right), second number = vertical (0% = top, 50% = center, 100% = bottom) */
+        background-repeat: no-repeat;
+        position: relative;
+        width: 100vw;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.3); /* Adjust this value: 0 = no overlay (true colors), 1 = completely white. Try 0.2, 0.3, 0.4, etc. */
+        z-index: 1;
+    }
+    
+    .hero-section h1,
+    .hero-section p {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: #0d1846;
+        text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+    }
+    
+    .hero-strapline {
+        font-size: 1.2rem;
+        font-weight: 400;
+        margin-bottom: 30px;
+        color: #333;
+        text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+    }
+    
+    .upload-section {
+        background-color: #f1efeb; /* Custom light grey */
+        border: none;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin: 20px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-section:hover {
+        background-color: #e8e5e0; /* Slightly darker on hover */
+        transform: scale(1.02);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .upload-btn {
+        background-color: #0079c8;
+        color: white;
+        padding: 10px 25px;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-btn:hover {
+        background-color: #005fa3;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    
+    .file-input {
+        margin: 15px 0;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        width: 100%;
+        max-width: 350px;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
+    }
+    
+    .feature-card {
+        background-color: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        color: #0079c8;
+        margin-bottom: 20px;
+    }
+    
+    .flash-messages {
+        margin: 20px 0;
+    }
+    
+    .flash-message {
+        padding: 15px;
+        border-radius: 5px;
+        margin: 10px 0;
+        font-weight: 500;
+    }
+    
+    .flash-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .flash-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .flash-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+</style>
+
+<div class="hero-section">
+    <h1 class="hero-title">Bupa's AI Emblematic</h1>
+    <p class="hero-strapline">Intelligent Document Processing with AI</p>
+</div>
+
+<!-- <div class="flash-messages">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div> -->
+
+<div class="upload-section">
+    <h3 style="color: #0d1846;">Upload Your Document</h3>
+    <p style="color: #0d1846;">Upload a PDF document to extract and analyse its text content.</p>
+    
+    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+        <div>
+            <input type="file" name="file" accept=".pdf" required class="file-input">
+        </div>
+        <button type="submit" class="upload-btn">Extract Text</button>
+    </form>
+    
+    <p style="font-size: 12px; color: #666; margin-top: 10px;">
+        PDF files only • Max 16MB
+    </p>
+</div>
+
+<!-- <div class="features-grid">
+    <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <h4>Text Extraction</h4>
+        <p>Advanced PDF text extraction technology to accurately capture all text content from your documents</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h4>Smart Caching</h4>
+        <p>Intelligent caching system that remembers your documents for instant access on future uploads</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h4>Secure Processing</h4>
+        <p>Your documents are processed securely with file hashing to ensure privacy and data integrity</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h4>AI-Powered</h4>
+        <p>Leveraging cutting-edge AI technology for intelligent document processing and analysis</p>
+    </div>
+</div> -->
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const fileInput = this.querySelector('input[type="file"]');
+    if (fileInput.files.length === 0) {
+        e.preventDefault();
+        alert('Please select a PDF file to upload.');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    if (file.size > 16 * 1024 * 1024) { // 16MB
+        e.preventDefault();
+        alert('File size must be less than 16MB.');
+        return;
+    }
+    
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        e.preventDefault();
+        alert('Please select a PDF file.');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.textContent = 'Processing...';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}
