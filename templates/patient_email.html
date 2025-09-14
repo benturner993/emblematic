@@ -1,0 +1,657 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Email Generator - AI Emblematic{% endblock %}
+
+{% block content %}
+<style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        .hero-section {
+            text-align: center;
+            padding: 40px 20px;
+            margin: -20px calc(-50vw + 50%) 40px calc(-50vw + 50%);
+            background-image: url("{{ url_for('static', filename='online-A-long-journey.png') }}");
+            background-size: 100% auto;
+            background-position: 50% 30%;
+            background-repeat: no-repeat;
+            position: relative;
+            width: 100vw;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 1;
+        }
+        
+        .hero-section h1,
+        .hero-section p {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #0d1846;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+        
+        .hero-strapline {
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin-bottom: 30px;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: #0079c8;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .back-button:hover {
+            background-color: #005a9e;
+            color: white;
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .chat-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .chat-section, .preview-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header, .preview-header {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .chat-header h3, .preview-header h3 {
+            color: #0079c8;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #fafafa;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            border-radius: 10px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        
+        .message.assistant {
+            background-color: #e3f2fd;
+            border: 1px solid #bbdefb;
+            margin-right: auto;
+        }
+        
+        .message.user {
+            background-color: #0079c8;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .message.system {
+            background-color: #f1f8e9;
+            border: 1px solid #c8e6c9;
+            text-align: center;
+            margin: 0 auto;
+            font-style: italic;
+        }
+        
+        .message-time {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 0.3rem;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .chat-input:focus {
+            border-color: #0079c8;
+        }
+        
+        .send-button {
+            background-color: #0079c8;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .send-button:hover {
+            background-color: #005a9e;
+        }
+        
+        .send-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: #fafafa;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+        
+        .document-context {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .document-context h4 {
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .document-context p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background-color: #0079c8;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #005a9e;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #0079c8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status-indicator {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .status-collecting {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status-complete {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-generating {
+            background-color: #cce5ff;
+            color: #004085;
+            border: 1px solid #99d6ff;
+        }
+        
+        @media (max-width: 768px) {
+            .chat-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .chat-section, .preview-section {
+                height: 400px;
+            }
+            
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .hero-strapline {
+                font-size: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .hero-section {
+                margin: -20px -20px 40px -20px;
+                width: calc(100% + 40px);
+            }
+        }
+    </style>
+
+    <div class="hero-section">
+        <h1 class="hero-title">📧 Patient Email Generator</h1>
+        <p class="hero-strapline">AI-Powered Patient Communication Assistant</p>
+    </div>
+    
+    <div class="container">
+        <div style="margin-bottom: 2rem;">
+            <a href="{{ url_for('text_display', file_hash=file_hash) }}" class="back-button">
+                ← Back to Document
+            </a>
+        </div>
+        
+        <div class="document-context">
+            <h4>📄 Document Context</h4>
+            <p>{{ text_preview }}</p>
+        </div>
+        
+        <div class="chat-container">
+            <div class="chat-section">
+                <div class="chat-header">
+                    <h3>💬 Patient Information Chat</h3>
+                </div>
+                
+                <div class="status-indicator status-collecting" id="statusIndicator">
+                    🔄 Collecting Patient Information
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages will be populated here -->
+                </div>
+                
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chatInput" 
+                           placeholder="Type your response here..." 
+                           onkeypress="handleKeyPress(event)">
+                    <button class="send-button" id="sendButton" onclick="sendMessage()">
+                        ➤
+                    </button>
+                </div>
+            </div>
+            
+            <div class="preview-section">
+                <div class="preview-header">
+                    <h3>📝 Generated Letter Preview</h3>
+                </div>
+                
+                <div class="preview-content" id="letterPreview">
+                    <div style="text-align: center; color: #6c757d; padding: 2rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
+                        <p>Complete the chat to generate your patient letter</p>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="generateButton" onclick="generateLetter()" disabled>
+                        <span class="loading" id="generateLoading" style="display: none;"></span>
+                        📧 Generate Letter
+                    </button>
+                    <button class="btn btn-success" id="copyButton" onclick="copyLetter()" disabled>
+                        📋 Copy Letter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionData = null;
+        let fileHash = "{{ file_hash }}";
+        
+        // Initialize chat when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            startChat();
+        });
+        
+        async function startChat() {
+            try {
+                const response = await fetch('/api/patient-email/start-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                sessionData = data;
+                updateChatDisplay();
+                
+            } catch (error) {
+                console.error('Error starting chat:', error);
+                showError('Failed to start chat session: ' + error.message);
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const userResponse = input.value.trim();
+            
+            if (!userResponse) return;
+            
+            // Disable input while processing
+            input.disabled = true;
+            document.getElementById('sendButton').disabled = true;
+            
+            try {
+                const response = await fetch('/api/patient-email/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_data: sessionData,
+                        user_response: userResponse
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                sessionData = data;
+                updateChatDisplay();
+                
+                // Clear input
+                input.value = '';
+                
+                // Check if chat is completed
+                if (sessionData.completed) {
+                    updateStatus('complete');
+                    document.getElementById('generateButton').disabled = false;
+                    
+                    // Auto-generate letter if chat flow is complete
+                    if (sessionData.auto_generate) {
+                        // Add a message to show auto-generation
+                        const autoGenMessage = {
+                            role: 'assistant',
+                            content: '🤖 Automatically generating your patient letter...',
+                            timestamp: new Date().toISOString()
+                        };
+                        sessionData.messages.push(autoGenMessage);
+                        updateChatDisplay();
+                        
+                        setTimeout(() => {
+                            generateLetter();
+                        }, 1500); // Small delay for better UX
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showError('Failed to send message: ' + error.message);
+            } finally {
+                // Re-enable input
+                input.disabled = false;
+                document.getElementById('sendButton').disabled = false;
+                input.focus();
+            }
+        }
+        
+        function updateChatDisplay() {
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.innerHTML = '';
+            
+            sessionData.messages.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${message.role}`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.textContent = message.content;
+                messageDiv.appendChild(contentDiv);
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'message-time';
+                timeDiv.textContent = new Date(message.timestamp).toLocaleTimeString();
+                messageDiv.appendChild(timeDiv);
+                
+                messagesContainer.appendChild(messageDiv);
+            });
+            
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        async function generateLetter() {
+            const generateButton = document.getElementById('generateButton');
+            const generateLoading = document.getElementById('generateLoading');
+            const letterPreview = document.getElementById('letterPreview');
+            
+            // Show loading state
+            generateButton.disabled = true;
+            generateLoading.style.display = 'inline-block';
+            updateStatus('generating');
+            
+            try {
+                const response = await fetch('/api/patient-email/generate-letter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        patient_info: sessionData.patient_info,
+                        file_hash: fileHash
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                if (data.success) {
+                    letterPreview.textContent = data.letter_content;
+                    document.getElementById('copyButton').disabled = false;
+                    
+                    // Add success message to chat
+                    const successMessage = {
+                        role: 'assistant',
+                        content: '✅ Patient letter generated successfully! You can now copy it using the button below.',
+                        timestamp: new Date().toISOString()
+                    };
+                    sessionData.messages.push(successMessage);
+                    updateChatDisplay();
+                    
+                    showSuccess('Patient letter generated successfully!');
+                } else {
+                    throw new Error('Failed to generate letter');
+                }
+                
+            } catch (error) {
+                console.error('Error generating letter:', error);
+                showError('Failed to generate letter: ' + error.message);
+            } finally {
+                // Hide loading state
+                generateButton.disabled = false;
+                generateLoading.style.display = 'none';
+                updateStatus('complete');
+            }
+        }
+        
+        function copyLetter() {
+            const letterPreview = document.getElementById('letterPreview');
+            const text = letterPreview.textContent;
+            
+            navigator.clipboard.writeText(text).then(function() {
+                showSuccess('Letter copied to clipboard!');
+                
+                // Temporarily change button text
+                const copyButton = document.getElementById('copyButton');
+                const originalText = copyButton.innerHTML;
+                copyButton.innerHTML = '✅ Copied!';
+                
+                setTimeout(() => {
+                    copyButton.innerHTML = originalText;
+                }, 2000);
+                
+            }).catch(function(err) {
+                console.error('Error copying text:', err);
+                showError('Failed to copy letter to clipboard');
+            });
+        }
+        
+        function updateStatus(status) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            
+            switch (status) {
+                case 'collecting':
+                    statusIndicator.className = 'status-indicator status-collecting';
+                    statusIndicator.innerHTML = '🔄 Collecting Patient Information';
+                    break;
+                case 'complete':
+                    statusIndicator.className = 'status-indicator status-complete';
+                    statusIndicator.innerHTML = '✅ Information Collection Complete';
+                    break;
+                case 'generating':
+                    statusIndicator.className = 'status-indicator status-generating';
+                    statusIndicator.innerHTML = '🤖 Generating Patient Letter...';
+                    break;
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        function showError(message) {
+            // Simple error display - you can enhance this
+            alert('Error: ' + message);
+        }
+        
+        function showSuccess(message) {
+            // Simple success display - you can enhance this
+            console.log('Success: ' + message);
+        }
+    </script>
+{% endblock %}

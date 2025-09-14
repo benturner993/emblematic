@@ -7,10 +7,11 @@ from flask import Flask
 import logging
 
 # Import our modular components
-from config import config
-from ai_services import AIService
-from fhir_services import FHIRService
-from routes import Routes
+from src.config.config import config
+from src.services.ai_services import AIService
+from src.services.fhir_services import FHIRService
+from src.services.patient_email import PatientEmailService
+from src.routes.routes import Routes
 
 def create_app():
     """Application factory pattern for creating Flask app."""
@@ -31,9 +32,10 @@ def create_app():
     # Initialize services
     ai_service = AIService(config)
     fhir_service = FHIRService(config)
+    patient_email_service = PatientEmailService(config)
     
     # Register routes
-    Routes(app, config, ai_service, fhir_service)
+    Routes(app, config, ai_service, fhir_service, patient_email_service)
     
     # Log configuration status
     if config.is_openai_configured():

@@ -8,7 +8,7 @@ import httpx
 import json
 import logging
 from datetime import datetime
-from utils import truncate_text, write_judge_output_to_file
+from src.utils import truncate_text, write_judge_output_to_file
 
 class FHIRService:
     """Service class for FHIR-related operations."""

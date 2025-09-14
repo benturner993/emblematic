@@ -1,0 +1,82 @@
+HEALTH INSURANCE APPLICATION - MEDICAL QUESTIONNAIRE
+
+Applicant Information:
+Name: John Smith
+Age: 45
+Gender: Male
+Policy Application Number: INS-2024-001
+
+MEDICAL HISTORY:
+
+Pre-existing Conditions:
+1. Type 2 Diabetes - Diagnosed January 2020
+   - Current medication: Metformin 1000mg twice daily
+   - Last HbA1c: 7.2% (December 2024)
+   - Well controlled with medication
+   - No complications to date
+
+2. Hypertension - Diagnosed March 2018
+   - Current medication: Lisinopril 10mg daily
+   - Blood pressure readings: 130/85 mmHg average
+   - Regular monitoring required
+
+Current Vital Signs (Last Medical Exam):
+- Blood Pressure: 130/85 mmHg
+- Heart Rate: 72 BPM
+- Weight: 180 lbs
+- Height: 5'10"
+- BMI: 25.8
+- Temperature: 98.6°F
+
+Laboratory Results:
+- HbA1c: 7.2% (Reference: <7.0%) - ABNORMAL
+- Total Cholesterol: 190 mg/dL (Reference: <200 mg/dL) - NORMAL
+- LDL Cholesterol: 110 mg/dL (Reference: <100 mg/dL) - SLIGHTLY ELEVATED
+
+Current Medications:
+1. Metformin 1000mg - Twice daily, oral - For Type 2 Diabetes
+2. Lisinopril 10mg - Once daily, oral - For Hypertension
+
+Allergies:
+- Penicillin (rash)
+- No other known allergies
+
+Family History:
+- Father: Heart disease (age 55), Diabetes (age 60), deceased at 68 (heart attack)
+- Mother: Breast cancer (age 62), alive
+- Siblings: Brother with hypertension (age 50)
+
+Lifestyle Factors:
+- Smoking: Never smoked
+- Alcohol: Social drinker (2-3 drinks per week)
+- Exercise: Walks 30 minutes, 3 times per week
+- Diet: Following diabetic diet plan
+- Occupation: Office manager
+
+Surgical History:
+- Appendectomy (2015)
+- No other surgeries
+
+Hospitalization History:
+- None in the past 5 years
+
+Recent Medical Visits:
+- Quarterly diabetes check-ups
+- Annual physical exam
+- No emergency room visits in past 2 years
+
+RISK ASSESSMENT:
+Overall Risk Level: MODERATE
+Risk Factors: Type 2 Diabetes, Hypertension, Family history of heart disease
+Protective Factors: Non-smoker, Regular exercise, Medication compliance
+
+UNDERWRITING RECOMMENDATIONS:
+- Medical examination required: YES
+- Premium adjustment: Standard rate plus 25% for diabetes and hypertension
+- Policy exclusions: None recommended at this time
+- Follow-up: Annual medical reports required
+
+Underwriter Notes: Applicant shows good compliance with diabetes management. Blood sugar levels are reasonably controlled. Hypertension is well-managed with medication. Family history of cardiovascular disease presents additional risk but is mitigated by healthy lifestyle choices.
+
+Application Date: January 15, 2025
+Medical Exam Required By: February 15, 2025

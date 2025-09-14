@@ -8,7 +8,7 @@ import json
 import logging
 from flask import render_template, request, jsonify, redirect, url_for, flash
 from werkzeug.utils import secure_filename
-from utils import (
+from src.utils import (
     get_file_hash, allowed_file, extract_text_from_pdf, 
     save_session_data, load_session_data, save_text_to_cache, 
     load_text_from_cache, load_judge_logs, validate_file_size
@@ -17,12 +17,13 @@ from utils import (
 class Routes:
     """Class to handle all Flask routes."""
     
-    def __init__(self, app, config, ai_service, fhir_service):
+    def __init__(self, app, config, ai_service, fhir_service, patient_email_service=None):
         """Initialize routes with Flask app and services."""
         self.app = app
         self.config = config
         self.ai_service = ai_service
         self.fhir_service = fhir_service
+        self.patient_email_service = patient_email_service
         self._register_routes()
     
     def _register_routes(self):
@@ -244,6 +245,92 @@ class Routes:
                                      file_hash=file_hash)
         
         # Register error handlers
+        # Patient Email Routes
+        @self.app.route('/patient-email/<file_hash>')
+        def patient_email_interface(file_hash):
+            """Render the patient email chat interface."""
+            try:
+                # Load the document text for context
+                text = load_text_from_cache(file_hash, self.config.TEXT_CACHE_FOLDER)
+                if not text:
+                    flash('Document not found. Please upload a document first.')
+                    return redirect(url_for('index'))
+                
+                return render_template('patient_email.html', 
+                                     file_hash=file_hash,
+                                     text_preview=text[:500] + "..." if len(text) > 500 else text)
+            except Exception as e:
+                logging.error(f"Error loading patient email interface: {e}")
+                flash('Error loading patient email interface.')
+                return redirect(url_for('index'))
+        
+        @self.app.route('/api/patient-email/start-chat', methods=['POST'])
+        def start_patient_chat():
+            """Start a new patient email chat session."""
+            try:
+                if not self.patient_email_service:
+                    return jsonify({"error": "Patient email service not available"}), 500
+                
+                session_data = self.patient_email_service.start_chat_session()
+                return jsonify(session_data)
+                
+            except Exception as e:
+                logging.error(f"Error starting patient chat: {e}")
+                return jsonify({"error": "Failed to start chat session"}), 500
+        
+        @self.app.route('/api/patient-email/chat', methods=['POST'])
+        def process_patient_chat():
+            """Process patient chat responses."""
+            try:
+                if not self.patient_email_service:
+                    return jsonify({"error": "Patient email service not available"}), 500
+                
+                data = request.get_json()
+                session_data = data.get('session_data', {})
+                user_response = data.get('user_response', '')
+                
+                if not user_response.strip():
+                    return jsonify({"error": "Please provide a response"}), 400
+                
+                updated_session = self.patient_email_service.process_chat_response(
+                    session_data, user_response
+                )
+                
+                return jsonify(updated_session)
+                
+            except Exception as e:
+                logging.error(f"Error processing patient chat: {e}")
+                return jsonify({"error": "Failed to process chat response"}), 500
+        
+        @self.app.route('/api/patient-email/generate-letter', methods=['POST'])
+        def generate_patient_letter():
+            """Generate patient letter from collected information."""
+            try:
+                if not self.patient_email_service:
+                    return jsonify({"error": "Patient email service not available"}), 500
+                
+                data = request.get_json()
+                patient_info = data.get('patient_info', {})
+                file_hash = data.get('file_hash')
+                
+                # Get document context if available
+                document_context = None
+                if file_hash:
+                    try:
+                        document_context = load_text_from_cache(file_hash, self.config.TEXT_CACHE_FOLDER)
+                    except Exception as e:
+                        logging.warning(f"Could not load document context: {e}")
+                
+                result = self.patient_email_service.generate_patient_letter(
+                    patient_info, document_context
+                )
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                logging.error(f"Error generating patient letter: {e}")
+                return jsonify({"error": "Failed to generate patient letter"}), 500
+
         @self.app.errorhandler(404)
         def not_found_error(error):
             """Handle 404 errors"""

@@ -131,13 +131,14 @@
     
     .action-buttons {
         display: flex;
-        gap: 15px;
+        gap: 12px;
         justify-content: center;
         margin-top: 30px;
+        flex-wrap: wrap;
     }
     
     .btn {
-        padding: 12px 24px;
+        padding: 14px 28px;
         border: none;
         border-radius: 8px;
         font-size: 1rem;
@@ -146,6 +147,9 @@
         text-decoration: none;
         display: inline-block;
         transition: all 0.3s ease;
+        min-width: 180px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .btn-primary {
@@ -156,6 +160,7 @@
     .btn-primary:hover {
         background-color: #005fa3;
         transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     
     .btn-secondary {
@@ -166,6 +171,7 @@
     .btn-secondary:hover {
         background-color: #545b62;
         transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     
     .copy-btn {
@@ -191,52 +197,86 @@
         background-color: #0079c8;
         color: white;
         border: none;
-        padding: 12px 24px;
+        padding: 14px 28px;
         border-radius: 8px;
         cursor: pointer;
         font-size: 1rem;
         font-weight: 600;
-        margin: 0 15px;
+        margin: 0 8px;
         transition: all 0.3s ease;
         text-decoration: none;
         display: inline-block;
+        min-width: 180px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .summarise-btn:hover {
         background-color: #005fa3;
         transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     
     .summarise-btn:disabled {
         background-color: #6c757d;
         cursor: not-allowed;
         transform: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .fhir-btn {
         background-color: #28a745;
         color: white;
         border: none;
-        padding: 12px 24px;
+        padding: 14px 28px;
         border-radius: 8px;
         cursor: pointer;
         font-size: 1rem;
         font-weight: 600;
-        margin: 0 15px;
+        margin: 0 8px;
         transition: all 0.3s ease;
         text-decoration: none;
         display: inline-block;
+        min-width: 180px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .fhir-btn:hover {
         background-color: #218838;
         transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .patient-email-btn {
+        background-color: #6f42c1;
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 8px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        min-width: 180px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .patient-email-btn:hover {
+        background-color: #5a2d91;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     
     .fhir-btn:disabled {
         background-color: #6c757d;
         cursor: not-allowed;
         transform: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .analysis-section {
@@ -344,6 +384,20 @@
         text-transform: capitalize;
     }
     
+    /* Risk level styling */
+    .risk-low { background-color: #28a745 !important; }
+    .risk-moderate { background-color: #ffc107 !important; color: #000 !important; }
+    .risk-high { background-color: #fd7e14 !important; }
+    .risk-very_high { background-color: #dc3545 !important; }
+    .risk-uninsurable { background-color: #6f42c1 !important; }
+    .risk-unknown { background-color: #6c757d !important; }
+    
+    /* Severity level styling */
+    .severity-mild { background-color: #28a745 !important; }
+    .severity-moderate { background-color: #ffc107 !important; color: #000 !important; }
+    .severity-severe { background-color: #fd7e14 !important; }
+    .severity-critical { background-color: #dc3545 !important; }
+    
     @media (max-width: 768px) {
         .file-info {
             flex-direction: column;
@@ -355,9 +409,10 @@
             align-items: center;
         }
         
-        .btn {
+        .btn, .summarise-btn, .fhir-btn, .patient-email-btn {
             width: 100%;
             max-width: 300px;
+            margin: 5px 0;
         }
     }
 </style>
@@ -412,6 +467,9 @@
         </button>
         <button class="fhir-btn" onclick="convertToFHIR()" id="fhirBtn">
             🏥 Convert to FHIR
+        </button>
+        <button class="patient-email-btn" onclick="openPatientEmail()" id="patientEmailBtn">
+            📧 Patient Email
         </button>
         <a href="{{ url_for('about') }}" class="btn btn-secondary">Learn More</a>
     </div>
@@ -564,6 +622,12 @@ function displayAnalysisResults(data) {
         return;
     }
     
+    // Check if this is an insurance underwriting document
+    if (data.is_insurance_underwriting && data.underwriting_data) {
+        displayInsuranceUnderwritingResults(data);
+        return;
+    }
+    
     // Display structured analysis for medical documents
     const classification = data.classification;
     const summary = data.summary;
@@ -624,6 +688,240 @@ function displayAnalysisResults(data) {
             </div>
         `;
     }
+    
+    analysisContent.innerHTML = html;
+}
+
+function displayInsuranceUnderwritingResults(data) {
+    const analysisContent = document.getElementById('analysisContent');
+    const classification = data.classification;
+    const summary = data.summary;
+    const underwriting = data.underwriting_data;
+    
+    let html = `
+        <div class="analysis-item">
+            <h4>🏥 Insurance Underwriting Analysis</h4>
+            <p><strong>Document Type:</strong> <span class="document-type-badge">${classification.document_type}</span></p>
+            <p><strong>Confidence:</strong> <span class="confidence-badge">${Math.round(classification.confidence * 100)}%</span></p>
+            <p><strong>Overall Risk Level:</strong> <span class="confidence-badge risk-${underwriting.overall_risk_level || 'unknown'}">${(underwriting.overall_risk_level || 'Unknown').toUpperCase()}</span></p>
+        </div>
+        
+        <div class="analysis-item">
+            <h4>👤 Patient Information</h4>
+            <p><strong>Age:</strong> ${underwriting.patient_age || 'Not specified'}</p>
+            <p><strong>Gender:</strong> ${underwriting.patient_gender || 'Not specified'}</p>
+            <p><strong>Patient ID:</strong> ${underwriting.patient_id || 'Not specified'}</p>
+        </div>
+    `;
+    
+    // Pre-existing Conditions
+    if (underwriting.pre_existing_conditions && underwriting.pre_existing_conditions.length > 0) {
+        html += `
+            <div class="analysis-item">
+                <h4>🩺 Pre-existing Conditions</h4>
+        `;
+        underwriting.pre_existing_conditions.forEach(condition => {
+            html += `
+                <div style="border-left: 3px solid #dc3545; padding-left: 15px; margin-bottom: 15px;">
+                    <p><strong>${condition.condition_name}</strong></p>
+                    ${condition.icd_10_code ? `<p><strong>ICD-10:</strong> ${condition.icd_10_code}</p>` : ''}
+                    ${condition.severity ? `<p><strong>Severity:</strong> <span class="confidence-badge severity-${condition.severity}">${condition.severity.toUpperCase()}</span></p>` : ''}
+                    ${condition.diagnosis_date ? `<p><strong>Diagnosed:</strong> ${condition.diagnosis_date}</p>` : ''}
+                    ${condition.treatment_status ? `<p><strong>Status:</strong> ${condition.treatment_status}</p>` : ''}
+                    ${condition.medications && condition.medications.length > 0 ? `<p><strong>Medications:</strong> ${condition.medications.join(', ')}</p>` : ''}
+                    ${condition.risk_factors && condition.risk_factors.length > 0 ? `<p><strong>Risk Factors:</strong> ${condition.risk_factors.join(', ')}</p>` : ''}
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+    
+    // Current Medications
+    if (underwriting.current_medications && underwriting.current_medications.length > 0) {
+        html += `
+            <div class="analysis-item">
+                <h4>💊 Current Medications</h4>
+                <ul>
+        `;
+        underwriting.current_medications.forEach(med => {
+            html += `
+                <li>
+                    <strong>${med.medication_name}</strong>
+                    ${med.dosage ? ` - ${med.dosage}` : ''}
+                    ${med.frequency ? ` (${med.frequency})` : ''}
+                    ${med.indication ? ` for ${med.indication}` : ''}
+                </li>
+            `;
+        });
+        html += `
+                </ul>
+            </div>
+        `;
+    }
+    
+    // Vital Signs
+    if (underwriting.vital_signs) {
+        const vitals = underwriting.vital_signs;
+        html += `
+            <div class="analysis-item">
+                <h4>📊 Vital Signs</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+        `;
+        if (vitals.blood_pressure_systolic && vitals.blood_pressure_diastolic) {
+            html += `<p><strong>Blood Pressure:</strong> ${vitals.blood_pressure_systolic}/${vitals.blood_pressure_diastolic} mmHg</p>`;
+        }
+        if (vitals.heart_rate) {
+            html += `<p><strong>Heart Rate:</strong> ${vitals.heart_rate} BPM</p>`;
+        }
+        if (vitals.weight) {
+            html += `<p><strong>Weight:</strong> ${vitals.weight} lbs</p>`;
+        }
+        if (vitals.height) {
+            html += `<p><strong>Height:</strong> ${vitals.height}</p>`;
+        }
+        if (vitals.bmi) {
+            html += `<p><strong>BMI:</strong> ${vitals.bmi}</p>`;
+        }
+        if (vitals.oxygen_saturation) {
+            html += `<p><strong>O2 Sat:</strong> ${vitals.oxygen_saturation}%</p>`;
+        }
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    // Lab Results
+    if (underwriting.lab_results && underwriting.lab_results.length > 0) {
+        html += `
+            <div class="analysis-item">
+                <h4>🧪 Laboratory Results</h4>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background-color: #f8f9fa;">
+                            <th style="padding: 8px; border: 1px solid #ddd;">Test</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Result</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Reference Range</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        underwriting.lab_results.forEach(lab => {
+            const statusColor = lab.abnormal_flag ? '#dc3545' : '#28a745';
+            const statusText = lab.abnormal_flag ? 'Abnormal' : 'Normal';
+            html += `
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${lab.test_name}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${lab.result_value} ${lab.units || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${lab.reference_range || 'N/A'}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; color: ${statusColor}; font-weight: bold;">${statusText}</td>
+                </tr>
+            `;
+        });
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+    
+    // Family History
+    if (underwriting.family_history && underwriting.family_history.length > 0) {
+        html += `
+            <div class="analysis-item">
+                <h4>👨‍👩‍👧‍👦 Family History</h4>
+        `;
+        underwriting.family_history.forEach(family => {
+            html += `
+                <div style="border-left: 3px solid #ffc107; padding-left: 15px; margin-bottom: 10px;">
+                    <p><strong>${family.relation.charAt(0).toUpperCase() + family.relation.slice(1)}:</strong> ${family.conditions.join(', ')}</p>
+                    ${family.cause_of_death ? `<p><strong>Cause of Death:</strong> ${family.cause_of_death}</p>` : ''}
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+    
+    // Lifestyle Factors
+    if (underwriting.lifestyle_factors) {
+        const lifestyle = underwriting.lifestyle_factors;
+        html += `
+            <div class="analysis-item">
+                <h4>🏃‍♂️ Lifestyle Factors</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+        `;
+        if (lifestyle.smoking_status) {
+            html += `<p><strong>Smoking:</strong> ${lifestyle.smoking_status}</p>`;
+        }
+        if (lifestyle.alcohol_consumption) {
+            html += `<p><strong>Alcohol:</strong> ${lifestyle.alcohol_consumption}</p>`;
+        }
+        if (lifestyle.exercise_frequency) {
+            html += `<p><strong>Exercise:</strong> ${lifestyle.exercise_frequency}</p>`;
+        }
+        if (lifestyle.occupation) {
+            html += `<p><strong>Occupation:</strong> ${lifestyle.occupation}</p>`;
+        }
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    // Risk Assessment
+    html += `
+        <div class="analysis-item">
+            <h4>⚖️ Risk Assessment</h4>
+            <p><strong>Overall Risk Level:</strong> <span class="confidence-badge risk-${underwriting.overall_risk_level || 'unknown'}">${(underwriting.overall_risk_level || 'Unknown').toUpperCase()}</span></p>
+    `;
+    
+    if (underwriting.risk_factors && underwriting.risk_factors.length > 0) {
+        html += `
+            <p><strong>Risk Factors:</strong></p>
+            <ul>
+                ${underwriting.risk_factors.map(factor => `<li>${factor}</li>`).join('')}
+            </ul>
+        `;
+    }
+    
+    if (underwriting.protective_factors && underwriting.protective_factors.length > 0) {
+        html += `
+            <p><strong>Protective Factors:</strong></p>
+            <ul>
+                ${underwriting.protective_factors.map(factor => `<li style="color: #28a745;">${factor}</li>`).join('')}
+            </ul>
+        `;
+    }
+    
+    html += `</div>`;
+    
+    // Underwriting Recommendations
+    if (underwriting.underwriting_notes || underwriting.premium_adjustments || underwriting.requires_medical_exam) {
+        html += `
+            <div class="analysis-item">
+                <h4>📝 Underwriting Recommendations</h4>
+                ${underwriting.underwriting_notes ? `<p><strong>Notes:</strong> ${underwriting.underwriting_notes}</p>` : ''}
+                ${underwriting.premium_adjustments ? `<p><strong>Premium Adjustments:</strong> ${underwriting.premium_adjustments}</p>` : ''}
+                ${underwriting.requires_medical_exam !== null ? `<p><strong>Medical Exam Required:</strong> ${underwriting.requires_medical_exam ? 'Yes' : 'No'}</p>` : ''}
+                ${underwriting.recommended_exclusions && underwriting.recommended_exclusions.length > 0 ? `
+                    <p><strong>Recommended Exclusions:</strong></p>
+                    <ul>
+                        ${underwriting.recommended_exclusions.map(exclusion => `<li>${exclusion}</li>`).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        `;
+    }
+    
+    // Document Summary (still show this)
+    html += `
+        <div class="analysis-item">
+            <h4>📋 Document Summary</h4>
+            <p><strong>Main Topic:</strong> ${summary.main_topic}</p>
+            <p><strong>Summary:</strong> ${summary.summary}</p>
+        </div>
+    `;
     
     analysisContent.innerHTML = html;
 }
@@ -1033,6 +1331,16 @@ function displayFhirResults(data) {
     `;
     
     fhirContent.innerHTML = html;
+}
+
+function openPatientEmail() {
+    // Get the file hash from the current URL
+    const pathParts = window.location.pathname.split('/');
+    const fileHash = pathParts[pathParts.length - 1];
+    
+    // Open the patient email interface in a new tab
+    const patientEmailUrl = `/patient-email/${fileHash}`;
+    window.open(patientEmailUrl, '_blank');
 }
 
 function copyFhirToClipboard() {

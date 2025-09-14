@@ -6,7 +6,9 @@ A Flask web application for intelligent document processing with AI-powered anal
 
 - **Document Upload**: PDF file upload and text extraction
 - **AI Analysis**: OpenAI-powered document summarization and classification
+- **Insurance Underwriting**: Comprehensive health information extraction for insurance risk assessment
 - **FHIR Conversion**: Convert medical documents to FHIR format with confidence scoring
+- **Patient Email Generator**: Interactive chat interface for creating professional patient letters
 - **Smart Caching**: Avoid re-processing the same documents
 - **Modular Architecture**: Clean separation of concerns with dedicated service layers
 - **Best Score Tracking**: Returns the highest quality result from multiple AI attempts
@@ -20,32 +22,122 @@ A Flask web application for intelligent document processing with AI-powered anal
 
 ```
 emblematic/
-├── app.py                 # Main Flask application (modular entry point)
-├── app_original.py        # Original monolithic app (backup)
-├── config.py              # Application configuration and settings
-├── utils.py               # Utility functions (file handling, caching, etc.)
-├── ai_services.py         # AI/OpenAI service layer
-├── fhir_services.py       # FHIR conversion and validation services
-├── routes.py              # Flask route handlers
-├── models.py              # Pydantic models for AI analysis
+├── app.py                 # Main Flask application (CURRENT MAIN FILE)
 ├── keys.py                # API keys (not in version control)
 ├── keys_example.py        # Example API keys file
 ├── requirements.txt       # Python dependencies
 ├── README.md             # This file
 ├── .gitignore            # Git ignore file
-├── templates/            # HTML templates
-│   ├── base.html         # Base template
-│   ├── index.html        # Home page
+├── src/                  # Source code (Flask best practices structure)
+│   ├── __init__.py       # Python package initialization
+│   ├── utils.py          # Utility functions (file handling, caching, etc.)
+│   ├── config/           # Configuration management
+│   │   ├── __init__.py   # Package initialization
+│   │   └── config.py     # Application configuration and settings
+│   ├── models/           # Data models and schemas
+│   │   ├── __init__.py   # Package initialization
+│   │   └── models.py     # Pydantic models for AI analysis and insurance underwriting
+│   ├── services/         # Business logic and external API integrations
+│   │   ├── __init__.py   # Package initialization
+│   │   ├── ai_services.py         # AI/OpenAI service layer
+│   │   ├── fhir_services.py       # FHIR conversion and validation services
+│   │   └── patient_email.py       # Patient email generation and chat interface
+│   └── routes/           # Flask route handlers
+│       ├── __init__.py   # Package initialization
+│       └── routes.py     # HTTP request/response handling
+├── backup/               # Archived and backup files
+│   ├── app_original.py   # Original monolithic app (backup)
+│   ├── app_new.py        # Development version (backup)
+│   └── MODULARIZATION_SUMMARY.md  # Development notes
+├── docs/                 # Documentation and sample files
+│   ├── pil.11811.pdf     # Sample document for testing
+│   ├── pil12112.pdf      # Sample document for testing
+│   ├── test_insurance_sample.txt  # Sample insurance document
+│   └── env_example.txt   # Environment variables example
+├── templates/            # HTML templates (Flask convention)
+│   ├── base.html         # Base template with consistent styling
+│   ├── index.html        # Home page with document upload
 │   ├── about.html        # About page
-│   ├── text_display.html # Document display page
+│   ├── text_display.html # Document analysis and results page
+│   ├── patient_email.html # Patient email chat interface
 │   ├── fhir_logs.html    # FHIR conversion logs page
 │   ├── 404.html          # 404 error page
 │   └── 500.html          # 500 error page
-├── static/               # Static files
-│   └── online-A-long-journey.png  # Background image
+├── static/               # Static files (Flask convention)
+│   ├── css/
+│   │   └── style.css     # Custom styles
+│   ├── js/
+│   │   └── main.js       # JavaScript functionality
+│   ├── images/           # Image assets
+│   ├── bupa.png          # Favicon and logo
+│   └── online-A-long-journey.png  # Hero background image
 ├── uploads/              # Uploaded files (not in version control)
 └── text_cache/           # Cached text and analysis (not in version control)
 ```
+
+## Patient Email Generator
+
+The Patient Email Generator is a comprehensive chat-based interface that helps doctors create professional patient letters through a structured conversation flow.
+
+### Features
+
+- **Interactive Chat Interface**: User-friendly chat interface for collecting patient information
+- **Structured Question Flow**: Systematic collection of essential information:
+  - Patient's full name
+  - Doctor's practice name and location
+  - Medical reason for medication
+  - Detailed medication instructions
+  - Additional notes and concerns
+- **AI-Powered Letter Generation**: Professional patient letters generated using GPT-4
+- **Document Context Integration**: Uses uploaded document content for enhanced letter generation
+- **Copy-to-Clipboard**: Easy copying of generated letters for use in medical records
+- **Real-time Status Updates**: Visual indicators showing progress through the conversation
+
+### File: `patient_email.py`
+
+This module contains:
+
+- **`PatientEmailService`**: Main service class handling chat flow and letter generation
+- **`PatientInfo`**: Pydantic model for patient information validation
+- **`ChatMessage`**: Model for chat message structure
+- **Question Flow Management**: Structured conversation with validation
+- **AI Integration**: OpenAI GPT-4 integration for letter generation
+
+### Usage
+
+1. Upload a medical document
+2. Click the "📧 Patient Email" button
+3. Follow the interactive chat to provide patient information
+4. Generate and copy the professional patient letter
+
+### API Endpoints
+
+- `GET /patient-email/<file_hash>`: Patient email chat interface
+- `POST /api/patient-email/start-chat`: Initialize chat session
+- `POST /api/patient-email/chat`: Process chat responses
+- `POST /api/patient-email/generate-letter`: Generate patient letter
+
+## Insurance Underwriting Analysis
+
+The system includes comprehensive insurance underwriting capabilities with detailed health information extraction.
+
+### Features
+
+- **Automatic Detection**: AI identifies insurance underwriting documents
+- **Comprehensive Health Data**: Extracts pre-existing conditions, medications, family history, lab results
+- **Risk Assessment**: AI-powered risk level determination and recommendations
+- **Professional Display**: Insurance industry-standard presentation
+- **Pydantic Validation**: Structured data models for all health information
+
+### Models in `models.py`
+
+- **`InsuranceUnderwritingData`**: Comprehensive health information model
+- **`PreExistingCondition`**: Detailed condition tracking with ICD-10 codes
+- **`VitalSigns`**: Complete physiological measurements
+- **`LabResult`**: Laboratory test results with reference ranges
+- **`Medication`**: Detailed medication profiles
+- **`FamilyHistory`**: Family medical background
+- **`LifestyleFactors`**: Health behaviors and risk factors
 
 ## Modular Architecture
 
@@ -95,6 +187,93 @@ The application follows a clean, modular architecture with separation of concern
 - **Reusability**: Services can be reused across different contexts
 - **Scalability**: Easy to extend with new features
 - **Debugging**: Issues can be traced to specific modules
+
+## File Usage Guide
+
+### Current Active Files
+
+- **`app.py`**: ✅ **CURRENT MAIN FILE** - Use this to run the application (Flask factory pattern)
+
+### Flask Best Practices Structure (`src/` folder)
+
+- **`src/config/config.py`**: ⚙️ Configuration management and settings
+- **`src/utils.py`**: 🔧 Utility functions and helpers
+- **`src/models/models.py`**: 📋 Pydantic models for data validation
+- **`src/services/`**: 🏗️ Business logic and external API integrations
+  - `ai_services.py`: 🤖 AI analysis and insurance underwriting services
+  - `fhir_services.py`: 🏥 FHIR conversion and validation services
+  - `patient_email.py`: 📧 Patient email generation and chat interface
+- **`src/routes/routes.py`**: 🌐 Flask route handlers and API endpoints
+
+### Organized Files
+
+- **`backup/`**: 📁 Contains archived versions and development notes
+  - `app_original.py`: Original monolithic version (for reference)
+  - `app_new.py`: Development version (backup)
+  - `MODULARIZATION_SUMMARY.md`: Development documentation
+- **`docs/`**: 📚 Sample documents and configuration examples
+  - Sample PDF files for testing
+  - Insurance document samples
+  - Environment configuration examples
+
+### How to Run
+
+```bash
+# Use the current modular version (RECOMMENDED)
+python app.py
+```
+
+The application will start on `http://127.0.0.1:5001`
+
+### Development vs Production
+
+- **Development**: Use `app.py` (current modular architecture)
+- **Production**: Consider using a WSGI server like Gunicorn with `app.py`
+
+### File Organization
+
+The project follows a clean structure with organized folders:
+
+- **Root Level**: Contains only essential, active Python files
+- **`backup/`**: Archive folder for old versions and development notes
+- **`docs/`**: Sample documents, examples, and documentation files
+- **`templates/`**: HTML templates with consistent styling and structure
+- **`static/`**: Frontend assets (CSS, JavaScript, images) organized by type
+
+This organization ensures a clean development environment while preserving historical files for reference.
+
+## Flask Best Practices Structure
+
+The application follows Flask best practices with a well-organized `src/` directory structure:
+
+### Benefits of This Structure
+
+- **🏗️ Separation of Concerns**: Each directory has a specific responsibility
+- **📦 Package Organization**: Proper Python package structure with `__init__.py` files
+- **🔄 Import Management**: Clean import statements following Python conventions
+- **📈 Scalability**: Easy to add new services, models, or routes
+- **🧪 Testability**: Structure supports easy unit testing
+- **👥 Team Development**: Clear organization for multiple developers
+
+### Directory Purposes
+
+- **`src/config/`**: Application configuration, environment variables, settings
+- **`src/models/`**: Data models, Pydantic schemas, database models
+- **`src/services/`**: Business logic, external API integrations, core functionality
+- **`src/routes/`**: HTTP route handlers, request/response processing
+- **`src/utils.py`**: Shared utility functions used across modules
+
+### Import Convention
+
+The new structure uses explicit imports:
+```python
+# Example imports in the new structure
+from src.config.config import config
+from src.services.ai_services import AIService
+from src.models.models import DocumentAnalysis
+```
+
+This follows Python best practices and makes dependencies clear.
 
 ## Installation
 
@@ -264,8 +443,10 @@ Only conversions that pass both stages with perfect scores (5/5) are accepted as
 
 2. **Open your browser** and navigate to:
    ```
-   http://localhost:5000
+   http://127.0.0.1:5001
    ```
+
+**Note**: The application runs on port **5001** by default to avoid conflicts with other services.
 
 ## API Endpoints
 
@@ -346,8 +527,9 @@ def new_page():
 The app uses the following configuration:
 - **Debug Mode**: Enabled for development
 - **Host**: `0.0.0.0` (accessible from any IP)
-- **Port**: `5000`
+- **Port**: `5001` (to avoid conflicts with other services)
 - **Secret Key**: Set via environment variable `SECRET_KEY` or defaults to development key
+- **Azure OpenAI**: Configured via `keys.py` with your Azure credentials
 
 ## Production Deployment
 
